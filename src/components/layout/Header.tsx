@@ -1,14 +1,35 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Phone, Mail, Menu, X } from "lucide-react";
+import { Phone, Mail, Menu, X, User } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, isAdmin, signOut } = useAuth();
+  const [companyProfile, setCompanyProfile] = useState<{ name: string } | null>(
+    null
+  );
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchCompanyProfile = async () => {
+      if (user && !isAdmin) {
+        const { data, error } = await supabase
+          .from("companies")
+          .select("name")
+          .eq("user_id", user.id)
+          .single();
+        if (!error && data) setCompanyProfile(data);
+        else setCompanyProfile(null);
+      } else {
+        setCompanyProfile(null);
+      }
+    };
+    fetchCompanyProfile();
+  }, [user, isAdmin]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -17,6 +38,7 @@ export const Header = () => {
 
   const getDashboardLink = () => {
     if (isAdmin) return "/admin";
+    if (companyProfile) return "/company";
     return "/dashboard";
   };
 
@@ -80,7 +102,18 @@ export const Header = () => {
                   to={getDashboardLink()}
                   className="text-gray-700 hover:text-blue-600 transition-colors"
                 >
-                  {isAdmin ? "Admin Panel" : "Dashboard"}
+                  {isAdmin ? (
+                    "Admin Panel"
+                  ) : companyProfile ? (
+                    <span className="inline-flex items-center gap-2">
+                      <User className="w-5 h-5 text-blue-600" />
+                      <span className="font-semibold">
+                        {companyProfile.name}
+                      </span>
+                    </span>
+                  ) : (
+                    "Dashboard"
+                  )}
                 </Link>
                 <Button onClick={handleSignOut} variant="outline" size="sm">
                   Sign Out
@@ -138,7 +171,18 @@ export const Header = () => {
                     to={getDashboardLink()}
                     className="text-gray-700 hover:text-blue-600 transition-colors"
                   >
-                    {isAdmin ? "Admin Panel" : "Dashboard"}
+                    {isAdmin ? (
+                      "Admin Panel"
+                    ) : companyProfile ? (
+                      <span className="inline-flex items-center gap-2">
+                        <User className="w-5 h-5 text-blue-600" />
+                        <span className="font-semibold">
+                          {companyProfile.name}
+                        </span>
+                      </span>
+                    ) : (
+                      "Dashboard"
+                    )}
                   </Link>
                   <Button
                     onClick={handleSignOut}

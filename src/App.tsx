@@ -9,6 +9,7 @@ import { Quote } from "@/pages/Quote";
 import NotFound from "@/pages/NotFound";
 import { AuthProvider } from "@/hooks/useAuth";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
+import { CompanyDashboard } from "@/pages/CompanyDashboard";
 
 const ScrollToTop = () => {
   useScrollToTop();
@@ -27,6 +28,7 @@ export const App = () => {
               <Route path="/" element={<Home />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/company" element={<CompanyDashboard />} />
               <Route path="/quote" element={<Quote />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

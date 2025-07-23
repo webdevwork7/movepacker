@@ -101,7 +101,9 @@ export const Admin = () => {
       // Fetch bids
       const { data: bidsData } = await supabase
         .from("bids")
-        .select("*, companies(name)")
+        .select(
+          "id, company_id, lead_id, amount, position, status, utr_number, payment_verified, message, created_at, companies(name)"
+        )
         .order("created_at", { ascending: false });
 
       // Fetch settings
@@ -112,9 +114,18 @@ export const Admin = () => {
       setCompanies(companiesData || []);
       setLeads(leadsData || []);
       setBids(
-        bidsData?.map((bid) => ({
-          ...bid,
+        (bidsData as any[] | null)?.map((bid) => ({
+          id: bid.id,
+          company_id: bid.company_id,
+          lead_id: bid.lead_id,
+          amount: bid.amount,
+          position: bid.position,
           status: bid.status as "pending" | "approved" | "rejected",
+          utr_number: bid.utr_number,
+          payment_verified: bid.payment_verified,
+          message: bid.message,
+          created_at: bid.created_at,
+          companies: bid.companies ? { name: bid.companies.name } : undefined,
         })) || []
       );
 
@@ -179,6 +190,47 @@ export const Admin = () => {
   const handleLogout = async () => {
     await signOut();
     navigate("/");
+  };
+
+  const handleApproveBid = async (
+    bidId: string,
+    leadId: string,
+    companyId: string
+  ) => {
+    try {
+      // Approve the selected bid
+      const { error: approveError } = await supabase
+        .from("bids")
+        .update({ status: "approved" })
+        .eq("id", bidId);
+      if (approveError) throw approveError;
+
+      // Reject all other bids for the same lead
+      const { error: rejectError } = await supabase
+        .from("bids")
+        .update({ status: "rejected" })
+        .eq("lead_id", leadId)
+        .neq("id", bidId);
+      if (rejectError) throw rejectError;
+
+      // Increment review_count for the winning company
+      await supabase.rpc("increment_review_count", {
+        company_id_input: companyId,
+      });
+
+      toast({
+        title: "Bid Approved",
+        description:
+          "This bid has been approved and all others for this lead have been rejected. The company review count has been updated.",
+      });
+      fetchData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to approve bid",
+        variant: "destructive",
+      });
+    }
   };
 
   const getFilteredData = <T extends Company | Lead | Bid>(
@@ -737,9 +789,13 @@ export const Admin = () => {
                             <TableCell>
                               <div className="flex gap-2">
                                 <Button
-                                  onClick={() => {
-                                    /* Handle approve bid */
-                                  }}
+                                  onClick={() =>
+                                    handleApproveBid(
+                                      bid.id,
+                                      bid.lead_id,
+                                      bid.company_id
+                                    )
+                                  }
                                   className="bg-green-600 hover:bg-green-700"
                                   size="sm"
                                 >

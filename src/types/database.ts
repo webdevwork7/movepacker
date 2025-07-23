@@ -30,11 +30,13 @@ export interface Lead {
 export interface Bid {
   id: string;
   company_id: string;
+  lead_id: string;
   amount: number;
   position?: number;
   status: "pending" | "approved" | "rejected";
   utr_number?: string;
   payment_verified: boolean;
+  message?: string;
   created_at: string;
   companies?: {
     name: string;

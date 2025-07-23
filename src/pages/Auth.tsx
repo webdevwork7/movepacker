@@ -18,6 +18,10 @@ export const Auth = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [description, setDescription] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -30,7 +34,7 @@ export const Auth = () => {
       if (isAdmin) {
         navigate("/admin");
       } else {
-        navigate("/dashboard");
+        navigate("/company");
       }
     }
   }, [user, isAdmin, navigate]);
@@ -47,7 +51,7 @@ export const Auth = () => {
         return;
       }
 
-      if (!companyName || !phone) {
+      if (!companyName || !phone || !address || !city || !state) {
         setError("Please fill in all required fields");
         setLoading(false);
         return;
@@ -56,6 +60,10 @@ export const Auth = () => {
       const { error } = await signUp(email, password, {
         company_name: companyName,
         phone: phone,
+        address: address,
+        description: description,
+        city: city,
+        state: state,
       });
 
       if (error) {
@@ -63,8 +71,9 @@ export const Auth = () => {
       } else {
         toast({
           title: "Account created successfully!",
-          description: "Please check your email to verify your account.",
+          description: "Redirecting to your dashboard...",
         });
+        navigate("/company");
       }
     } else {
       const { error } = await signIn(email, password);
@@ -117,6 +126,47 @@ export const Auth = () => {
                     onChange={(e) => setPhone(e.target.value)}
                     required
                   />
+                </div>
+                <div>
+                  <Label htmlFor="address">Address</Label>
+                  <Input
+                    id="address"
+                    type="text"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="description">Description</Label>
+                  <Input
+                    id="description"
+                    type="text"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <Label htmlFor="city">City</Label>
+                    <Input
+                      id="city"
+                      type="text"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <Label htmlFor="state">State</Label>
+                    <Input
+                      id="state"
+                      type="text"
+                      value={state}
+                      onChange={(e) => setState(e.target.value)}
+                      required
+                    />
+                  </div>
                 </div>
               </>
             )}

@@ -28,9 +28,7 @@ export const CompanyListings = () => {
       const { data, error } = await supabase
         .from("companies")
         .select("*")
-        .eq("is_active", true)
-        .order("rating", { ascending: false });
-
+        .eq("is_active", true);
       if (error) throw error;
       setCompanies(data || []);
     } catch (error) {
@@ -55,14 +53,40 @@ export const CompanyListings = () => {
     );
   }
 
-  // First 10 companies shown at the top
-  const initialCompanies = companies.slice(0, 10);
-  // Rest of the companies for different sections
-  const remainingCompanies = companies.slice(10);
-  const topRankedCompanies = remainingCompanies.slice(0, 3);
-  const premiumCompanies = remainingCompanies.slice(3, 6);
-  const popularCompanies = remainingCompanies.slice(6, 9);
-  const featuredCompanies = remainingCompanies.slice(9, 12);
+  // Helper to avoid duplicate companies in sections
+  const usedCompanyIds = new Set<string>();
+  const getAndMark = (arr: Company[], count: number) => {
+    const result: Company[] = [];
+    for (const c of arr) {
+      if (!usedCompanyIds.has(c.id) && result.length < count) {
+        usedCompanyIds.add(c.id);
+        result.push(c);
+      }
+    }
+    return result;
+  };
+
+  // Top Ranked: top 3 by review_count
+  const topRankedSorted = [...companies].sort(
+    (a, b) => b.review_count - a.review_count
+  );
+  const topRankedCompanies = getAndMark(topRankedSorted, 3);
+
+  // Popular: top 3 by rating (excluding already shown)
+  const popularSorted = [...companies].sort((a, b) => b.rating - a.rating);
+  const popularCompanies = getAndMark(popularSorted, 3);
+
+  // Premium: top 3 by (rating * review_count), only if review_count >= 5 and rating >= 4
+  const premiumSorted = [...companies]
+    .filter((c) => c.review_count >= 5 && c.rating >= 4)
+    .sort((a, b) => b.rating * b.review_count - a.rating * a.review_count);
+  const premiumCompanies = getAndMark(premiumSorted, 3);
+
+  // Featured: next 3 random companies not already shown
+  const remaining = companies.filter((c) => !usedCompanyIds.has(c.id));
+  const featuredCompanies = remaining
+    .sort(() => 0.5 - Math.random())
+    .slice(0, 3);
 
   // Function to get rank badge styles
   const getRankBadgeStyles = (rank: number) => {
@@ -119,7 +143,7 @@ export const CompanyListings = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {initialCompanies.map((company, index) => (
+            {companies.slice(0, 10).map((company, index) => (
               <CompanyCard
                 key={company.id}
                 company={company}

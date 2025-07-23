@@ -2,6 +2,15 @@ import { useState, useEffect, createContext, useContext } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
+interface CompanySignupData {
+  company_name: string;
+  phone: string;
+  address: string;
+  description?: string;
+  city: string;
+  state: string;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -11,7 +20,7 @@ interface AuthContextType {
   signUp: (
     email: string,
     password: string,
-    userData?: any
+    userData?: CompanySignupData
   ) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
@@ -76,8 +85,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return { error };
   };
 
-  const signUp = async (email: string, password: string, userData?: any) => {
-    const { error } = await supabase.auth.signUp({
+  const signUp = async (
+    email: string,
+    password: string,
+    userData?: CompanySignupData
+  ) => {
+    // 1. Create the user in Supabase Auth
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -85,7 +99,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         data: userData,
       },
     });
-    return { error };
+    if (error) return { error };
+
+    // 2. After signup, create a company record if company_name is provided
+    if (
+      userData?.company_name &&
+      userData?.phone &&
+      userData?.address &&
+      userData?.city &&
+      userData?.state
+    ) {
+      // Wait for the user to be available in auth
+      let userId = data?.user?.id;
+      if (!userId) {
+        // Try to get the user from the current session
+        const session = (await supabase.auth.getSession()).data.session;
+        userId = session?.user?.id;
+      }
+      if (userId) {
+        await supabase.from("companies").insert({
+          user_id: userId,
+          name: userData.company_name,
+          phone: userData.phone,
+          email: email,
+          address: userData.address,
+          description: userData.description || "",
+          city: userData.city,
+          state: userData.state,
+          is_active: false,
+        });
+      }
+    }
+    return { error: null };
   };
 
   const signOut = async () => {
