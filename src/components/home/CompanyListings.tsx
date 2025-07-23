@@ -5,7 +5,7 @@ import { CompanyCard } from './CompanyCard';
 import { Button } from '@/components/ui/button';
 import { Company } from '@/types/database';
 import { siteConfig } from '@/config/site';
-import { Award, TrendingUp, Users, Star, Crown, Fire, Zap } from 'lucide-react';
+import { Award, TrendingUp, Users, Star, Crown, Flame, Zap } from 'lucide-react';
 
 export const CompanyListings = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -110,7 +110,7 @@ export const CompanyListings = () => {
         <div className="mb-20">
           <div className="text-center mb-12">
             <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-red-500 to-orange-500 rounded-full mb-6 shadow-lg">
-              <Fire className="w-10 h-10 text-white" />
+              <Flame className="w-10 h-10 text-white" />
             </div>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
               🔥 Popular Movers

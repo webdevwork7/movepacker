@@ -22,6 +22,13 @@ import {
   Phone
 } from 'lucide-react';
 
+interface AdminSettings {
+  upi_id?: string;
+  brand_name?: string;
+  support_email?: string;
+  support_phone?: string;
+}
+
 export const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [email, setEmail] = useState('');
@@ -30,7 +37,7 @@ export const Admin = () => {
   const [companies, setCompanies] = useState([]);
   const [leads, setLeads] = useState([]);
   const [bids, setBids] = useState([]);
-  const [settings, setSettings] = useState({});
+  const [settings, setSettings] = useState<AdminSettings>({});
   const [activeTab, setActiveTab] = useState('dashboard');
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -106,9 +113,9 @@ export const Admin = () => {
       setLeads(leadsData || []);
       setBids(bidsData || []);
       
-      const settingsObj = {};
+      const settingsObj: AdminSettings = {};
       settingsData?.forEach(setting => {
-        settingsObj[setting.key] = setting.value;
+        settingsObj[setting.key as keyof AdminSettings] = setting.value;
       });
       setSettings(settingsObj);
     } catch (error) {
