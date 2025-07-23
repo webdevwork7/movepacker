@@ -1,19 +1,23 @@
-
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Phone, Mail, Menu, X } from 'lucide-react';
-import { siteConfig } from '@/config/site';
-import { useAuth } from '@/hooks/useAuth';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Phone, Mail, Menu, X } from "lucide-react";
+import { siteConfig } from "@/config/site";
+import { useAuth } from "@/hooks/useAuth";
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { user, signOut } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
     await signOut();
-    navigate('/');
+    navigate("/");
+  };
+
+  const getDashboardLink = () => {
+    if (isAdmin) return "/admin";
+    return "/dashboard";
   };
 
   return (
@@ -47,23 +51,36 @@ export const Header = () => {
               </div>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">{siteConfig.name}</h1>
-              <p className="text-sm text-gray-600">Professional Movers & Packers</p>
+              <h1 className="text-2xl font-bold text-gray-800">
+                {siteConfig.name}
+              </h1>
+              <p className="text-sm text-gray-600">
+                Professional Movers & Packers
+              </p>
             </div>
           </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-6">
-            <Link to="/" className="text-gray-700 hover:text-blue-600 transition-colors">
+            <Link
+              to="/"
+              className="text-gray-700 hover:text-blue-600 transition-colors"
+            >
               Home
             </Link>
-            <Link to="/quote" className="text-gray-700 hover:text-blue-600 transition-colors">
+            <Link
+              to="/quote"
+              className="text-gray-700 hover:text-blue-600 transition-colors"
+            >
               Get Quote
             </Link>
             {user ? (
               <>
-                <Link to="/dashboard" className="text-gray-700 hover:text-blue-600 transition-colors">
-                  Dashboard
+                <Link
+                  to={getDashboardLink()}
+                  className="text-gray-700 hover:text-blue-600 transition-colors"
+                >
+                  {isAdmin ? "Admin Panel" : "Dashboard"}
                 </Link>
                 <Button onClick={handleSignOut} variant="outline" size="sm">
                   Sign Out
@@ -71,7 +88,10 @@ export const Header = () => {
               </>
             ) : (
               <>
-                <Link to="/auth" className="text-gray-700 hover:text-blue-600 transition-colors">
+                <Link
+                  to="/auth"
+                  className="text-gray-700 hover:text-blue-600 transition-colors"
+                >
                   Sign In
                 </Link>
                 <Link to="/auth?mode=signup">
@@ -88,7 +108,11 @@ export const Header = () => {
             className="md:hidden p-2"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
-            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {isMenuOpen ? (
+              <X className="w-6 h-6" />
+            ) : (
+              <Menu className="w-6 h-6" />
+            )}
           </button>
         </div>
 
@@ -96,24 +120,41 @@ export const Header = () => {
         {isMenuOpen && (
           <nav className="md:hidden mt-4 pb-4 border-t border-gray-200 pt-4">
             <div className="flex flex-col space-y-3">
-              <Link to="/" className="text-gray-700 hover:text-blue-600 transition-colors">
+              <Link
+                to="/"
+                className="text-gray-700 hover:text-blue-600 transition-colors"
+              >
                 Home
               </Link>
-              <Link to="/quote" className="text-gray-700 hover:text-blue-600 transition-colors">
+              <Link
+                to="/quote"
+                className="text-gray-700 hover:text-blue-600 transition-colors"
+              >
                 Get Quote
               </Link>
               {user ? (
                 <>
-                  <Link to="/dashboard" className="text-gray-700 hover:text-blue-600 transition-colors">
-                    Dashboard
+                  <Link
+                    to={getDashboardLink()}
+                    className="text-gray-700 hover:text-blue-600 transition-colors"
+                  >
+                    {isAdmin ? "Admin Panel" : "Dashboard"}
                   </Link>
-                  <Button onClick={handleSignOut} variant="outline" size="sm" className="w-fit">
+                  <Button
+                    onClick={handleSignOut}
+                    variant="outline"
+                    size="sm"
+                    className="w-fit"
+                  >
                     Sign Out
                   </Button>
                 </>
               ) : (
                 <>
-                  <Link to="/auth" className="text-gray-700 hover:text-blue-600 transition-colors">
+                  <Link
+                    to="/auth"
+                    className="text-gray-700 hover:text-blue-600 transition-colors"
+                  >
                     Sign In
                   </Link>
                   <Link to="/auth?mode=signup" className="w-fit">

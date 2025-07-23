@@ -1,4 +1,3 @@
-
 export interface Company {
   id: string;
   user_id: string;
@@ -16,27 +15,6 @@ export interface Company {
   updated_at: string;
 }
 
-export interface Bid {
-  id: string;
-  company_id: string;
-  amount: number;
-  position?: number;
-  status: 'pending' | 'approved' | 'rejected';
-  utr_number?: string;
-  payment_verified: boolean;
-  created_at: string;
-}
-
-export interface Review {
-  id: string;
-  company_id: string;
-  customer_name: string;
-  customer_email?: string;
-  rating: number;
-  review_text?: string;
-  created_at: string;
-}
-
 export interface Lead {
   id: string;
   name: string;
@@ -46,6 +24,30 @@ export interface Lead {
   to_location: string;
   moving_date?: string;
   message?: string;
+  created_at: string;
+}
+
+export interface Bid {
+  id: string;
+  company_id: string;
+  amount: number;
+  position?: number;
+  status: "pending" | "approved" | "rejected";
+  utr_number?: string;
+  payment_verified: boolean;
+  created_at: string;
+  companies?: {
+    name: string;
+  };
+}
+
+export interface Review {
+  id: string;
+  company_id: string;
+  customer_name: string;
+  customer_email?: string;
+  rating: number;
+  review_text?: string;
   created_at: string;
 }
 
@@ -64,4 +66,11 @@ export interface Setting {
   key: string;
   value: string;
   updated_at: string;
+}
+
+export interface AdminSettings {
+  upi_id?: string;
+  brand_name?: string;
+  support_email?: string;
+  support_phone?: string;
 }

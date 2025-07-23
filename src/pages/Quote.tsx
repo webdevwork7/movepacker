@@ -1,30 +1,35 @@
-
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { format } from 'date-fns';
-import { CalendarIcon, MapPin, Phone, Mail, User } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { format } from "date-fns";
+import {
+  CalendarIcon,
+  Truck,
+  Package,
+  MapPin,
+  Clock,
+  DollarSign,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 export const Quote = () => {
   const [searchParams] = useSearchParams();
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    fromLocation: searchParams.get('from') || '',
-    toLocation: searchParams.get('to') || '',
-    movingDate: undefined as Date | undefined,
-    message: ''
-  });
+  const [date, setDate] = useState<Date>();
+  const [fromLocation, setFromLocation] = useState(
+    searchParams.get("from") || ""
+  );
+  const [toLocation, setToLocation] = useState(searchParams.get("to") || "");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -32,43 +37,20 @@ export const Quote = () => {
     setLoading(true);
 
     try {
-      // Insert the lead
-      const { error } = await supabase
-        .from('leads')
-        .insert([
-          {
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone,
-            from_location: formData.fromLocation,
-            to_location: formData.toLocation,
-            moving_date: formData.movingDate?.toISOString().split('T')[0],
-            message: formData.message
-          }
-        ]);
-
-      if (error) throw error;
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
       toast({
         title: "Quote Request Submitted!",
-        description: "We'll connect you with the best movers in your area shortly.",
+        description:
+          "We'll get back to you with quotes from our top movers soon.",
       });
 
-      // Reset form
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        fromLocation: '',
-        toLocation: '',
-        movingDate: undefined,
-        message: ''
-      });
+      navigate("/");
     } catch (error) {
-      console.error('Error submitting quote:', error);
       toast({
         title: "Error",
-        description: "Failed to submit quote request. Please try again.",
+        description: "Something went wrong. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -76,144 +58,186 @@ export const Quote = () => {
     }
   };
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="container mx-auto px-4">
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
-              Get Your Free Quote
-            </h1>
-            <p className="text-gray-600">
-              Fill out the form below and we'll connect you with the best movers in your area.
-            </p>
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
+      <div className="container mx-auto">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+            Get Your Moving Quote
+          </h1>
+          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+            Fill out the form below and receive competitive quotes from our
+            top-rated moving companies.
+          </p>
+        </div>
+
+        {/* Features Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto mb-12">
+          <div className="flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm">
+            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+              <Clock className="w-6 h-6 text-blue-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold">Quick Response</h3>
+              <p className="text-sm text-gray-600">
+                Get quotes within 24 hours
+              </p>
+            </div>
           </div>
+          <div className="flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm">
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+              <DollarSign className="w-6 h-6 text-green-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold">Best Rates</h3>
+              <p className="text-sm text-gray-600">
+                Competitive pricing guaranteed
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm">
+            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+              <Package className="w-6 h-6 text-purple-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold">Full Service</h3>
+              <p className="text-sm text-gray-600">
+                Packing & moving solutions
+              </p>
+            </div>
+          </div>
+        </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5" />
-                Moving Quote Request
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Form */}
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white rounded-2xl shadow-lg p-8">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Personal Information */}
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                  <Truck className="w-5 h-5 text-blue-600" />
+                  Moving Details
+                </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="name">Full Name</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => handleInputChange('name', e.target.value)}
-                      required
-                    />
+                    <label className="block text-sm font-medium mb-1">
+                      Name
+                    </label>
+                    <Input required placeholder="Your full name" />
                   </div>
                   <div>
-                    <Label htmlFor="email">Email</Label>
+                    <label className="block text-sm font-medium mb-1">
+                      Phone
+                    </label>
                     <Input
-                      id="email"
+                      required
+                      type="tel"
+                      placeholder="Your phone number"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium mb-1">
+                      Email
+                    </label>
+                    <Input
+                      required
                       type="email"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange('email', e.target.value)}
-                      required
+                      placeholder="Your email address"
                     />
                   </div>
                 </div>
+              </div>
 
-                <div>
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
-                    required
-                  />
-                </div>
-
+              {/* Location Information */}
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-blue-600" />
+                  Location Information
+                </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="from">From Location</Label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                      <Input
-                        id="from"
-                        value={formData.fromLocation}
-                        onChange={(e) => handleInputChange('fromLocation', e.target.value)}
-                        className="pl-10"
-                        placeholder="Current address"
-                        required
-                      />
-                    </div>
+                    <label className="block text-sm font-medium mb-1">
+                      Moving From
+                    </label>
+                    <Input
+                      required
+                      placeholder="Current address"
+                      value={fromLocation}
+                      onChange={(e) => setFromLocation(e.target.value)}
+                    />
                   </div>
                   <div>
-                    <Label htmlFor="to">To Location</Label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                      <Input
-                        id="to"
-                        value={formData.toLocation}
-                        onChange={(e) => handleInputChange('toLocation', e.target.value)}
-                        className="pl-10"
-                        placeholder="Destination address"
-                        required
-                      />
-                    </div>
+                    <label className="block text-sm font-medium mb-1">
+                      Moving To
+                    </label>
+                    <Input
+                      required
+                      placeholder="Destination address"
+                      value={toLocation}
+                      onChange={(e) => setToLocation(e.target.value)}
+                    />
                   </div>
                 </div>
+              </div>
 
-                <div>
-                  <Label>Moving Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start text-left font-normal"
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {formData.movingDate ? format(formData.movingDate, "PPP") : "Pick a date"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={formData.movingDate}
-                        onSelect={(date) => setFormData(prev => ({ ...prev, movingDate: date }))}
-                        disabled={(date) => date < new Date()}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
+              {/* Moving Date */}
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-blue-600" />
+                  Moving Date
+                </h2>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !date && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {date ? format(date, "PPP") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={date}
+                      onSelect={setDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
 
-                <div>
-                  <Label htmlFor="message">Additional Details</Label>
-                  <Textarea
-                    id="message"
-                    value={formData.message}
-                    onChange={(e) => handleInputChange('message', e.target.value)}
-                    placeholder="Tell us about your moving needs (e.g., number of rooms, special items, etc.)"
-                    rows={4}
-                  />
-                </div>
+              {/* Additional Information */}
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                  <Package className="w-5 h-5 text-blue-600" />
+                  Additional Information
+                </h2>
+                <Textarea
+                  placeholder="Tell us about any special requirements or items that need extra care..."
+                  className="min-h-[100px]"
+                />
+              </div>
 
-                <Button 
-                  type="submit" 
-                  className="w-full bg-blue-600 hover:bg-blue-700"
-                  disabled={loading}
-                >
-                  {loading ? 'Submitting...' : 'Get Free Quote'}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-lg py-6"
+                disabled={loading}
+              >
+                {loading ? "Submitting..." : "Get Free Quotes"}
+              </Button>
+
+              <p className="text-center text-sm text-gray-500">
+                By submitting this form, you agree to our terms and conditions
+                and privacy policy.
+              </p>
+            </form>
+          </div>
         </div>
       </div>
     </div>
