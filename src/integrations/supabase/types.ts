@@ -14,7 +14,291 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      admin_users: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          password_hash: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          password_hash: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          password_hash?: string
+        }
+        Relationships: []
+      }
+      banners: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          priority: number | null
+          title: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          priority?: number | null
+          title: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          priority?: number | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "banners_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bids: {
+        Row: {
+          amount: number
+          company_id: string | null
+          created_at: string | null
+          id: string
+          payment_verified: boolean | null
+          position: number | null
+          status: string | null
+          utr_number: string | null
+        }
+        Insert: {
+          amount: number
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          payment_verified?: boolean | null
+          position?: number | null
+          status?: string | null
+          utr_number?: string | null
+        }
+        Update: {
+          amount?: number
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          payment_verified?: boolean | null
+          position?: number | null
+          status?: string | null
+          utr_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bids_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      companies: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string | null
+          description: string | null
+          email: string
+          id: string
+          is_active: boolean | null
+          name: string
+          phone: string
+          rating: number | null
+          review_count: number | null
+          state: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string | null
+          description?: string | null
+          email: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          phone: string
+          rating?: number | null
+          review_count?: number | null
+          state?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string | null
+          description?: string | null
+          email?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          phone?: string
+          rating?: number | null
+          review_count?: number | null
+          state?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      lead_assignments: {
+        Row: {
+          company_id: string | null
+          custom_message: string | null
+          id: string
+          lead_id: string | null
+          sent_at: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          custom_message?: string | null
+          id?: string
+          lead_id?: string | null
+          sent_at?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          custom_message?: string | null
+          id?: string
+          lead_id?: string | null
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_assignments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_assignments_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          created_at: string | null
+          email: string
+          from_location: string
+          id: string
+          message: string | null
+          moving_date: string | null
+          name: string
+          phone: string
+          to_location: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          from_location: string
+          id?: string
+          message?: string | null
+          moving_date?: string | null
+          name: string
+          phone: string
+          to_location: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          from_location?: string
+          id?: string
+          message?: string | null
+          moving_date?: string | null
+          name?: string
+          phone?: string
+          to_location?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          customer_email: string | null
+          customer_name: string
+          id: string
+          rating: number
+          review_text: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name: string
+          id?: string
+          rating: number
+          review_text?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string
+          id?: string
+          rating?: number
+          review_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      settings: {
+        Row: {
+          id: string
+          key: string
+          updated_at: string | null
+          value: string
+        }
+        Insert: {
+          id?: string
+          key: string
+          updated_at?: string | null
+          value: string
+        }
+        Update: {
+          id?: string
+          key?: string
+          updated_at?: string | null
+          value?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
