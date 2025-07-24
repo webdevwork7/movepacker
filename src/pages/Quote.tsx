@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Quote = () => {
   const [searchParams] = useSearchParams();
@@ -31,21 +32,33 @@ export const Quote = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const { error } = await supabase.from("leads").insert({
+        name,
+        phone,
+        email,
+        from_location: fromLocation,
+        to_location: toLocation,
+        moving_date: date ? date.toISOString().slice(0, 10) : null,
+        message,
+      });
+      if (error) throw error;
 
       toast({
         title: "Quote Request Submitted!",
         description:
           "We'll get back to you with quotes from our top movers soon.",
+        variant: "default",
       });
-
       navigate("/");
     } catch (error) {
       toast({
@@ -124,7 +137,12 @@ export const Quote = () => {
                     <label className="block text-sm font-medium mb-1">
                       Name
                     </label>
-                    <Input required placeholder="Your full name" />
+                    <Input
+                      required
+                      placeholder="Your full name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">
@@ -134,6 +152,8 @@ export const Quote = () => {
                       required
                       type="tel"
                       placeholder="Your phone number"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
                     />
                   </div>
                   <div className="md:col-span-2">
@@ -144,6 +164,8 @@ export const Quote = () => {
                       required
                       type="email"
                       placeholder="Your email address"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                     />
                   </div>
                 </div>
@@ -220,6 +242,8 @@ export const Quote = () => {
                 <Textarea
                   placeholder="Tell us about any special requirements or items that need extra care..."
                   className="min-h-[100px]"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
                 />
               </div>
 
