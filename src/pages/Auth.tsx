@@ -24,6 +24,7 @@ export const Auth = () => {
   const [state, setState] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [signupSuccess, setSignupSuccess] = useState(false);
 
   const { user, isAdmin, signIn, signUp } = useAuth();
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ export const Auth = () => {
       if (isAdmin) {
         navigate("/admin");
       } else {
-        navigate("/company");
+        navigate("/company-plans");
       }
     }
   }, [user, isAdmin, navigate]);
@@ -69,11 +70,12 @@ export const Auth = () => {
       if (error) {
         setError(error.message);
       } else {
+        setSignupSuccess(true);
         toast({
           title: "Account created successfully!",
-          description: "Redirecting to your dashboard...",
+          description: "Check your email to confirm your account if required.",
         });
-        navigate("/company");
+        // Do NOT navigate here; let useEffect handle it
       }
     } else {
       const { error } = await signIn(email, password);
@@ -104,122 +106,136 @@ export const Auth = () => {
           </p>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {isSignUp && (
-              <>
-                <div>
-                  <Label htmlFor="companyName">Company Name</Label>
-                  <Input
-                    id="companyName"
-                    type="text"
-                    value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="address">Address</Label>
-                  <Input
-                    id="address"
-                    type="text"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Input
-                    id="description"
-                    type="text"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <div className="flex-1">
-                    <Label htmlFor="city">City</Label>
+          {signupSuccess && !user ? (
+            <div className="text-center text-blue-700 font-semibold py-8">
+              Check your email to confirm your account and then sign in.
+              <br />
+              <span className="text-gray-500 text-sm">
+                (You will be redirected after confirmation.)
+              </span>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {isSignUp && (
+                <>
+                  <div>
+                    <Label htmlFor="companyName">Company Name</Label>
                     <Input
-                      id="city"
+                      id="companyName"
                       type="text"
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
                       required
                     />
                   </div>
-                  <div className="flex-1">
-                    <Label htmlFor="state">State</Label>
+                  <div>
+                    <Label htmlFor="phone">Phone Number</Label>
                     <Input
-                      id="state"
-                      type="text"
-                      value={state}
-                      onChange={(e) => setState(e.target.value)}
+                      id="phone"
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
                       required
                     />
                   </div>
-                </div>
-              </>
-            )}
+                  <div>
+                    <Label htmlFor="address">Address</Label>
+                    <Input
+                      id="address"
+                      type="text"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="description">Description</Label>
+                    <Input
+                      id="description"
+                      type="text"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <Label htmlFor="city">City</Label>
+                      <Input
+                        id="city"
+                        type="text"
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <Label htmlFor="state">State</Label>
+                      <Input
+                        id="state"
+                        type="text"
+                        value={state}
+                        onChange={(e) => setState(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
 
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-
-            {isSignUp && (
               <div>
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                 />
               </div>
-            )}
 
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+              <div>
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
 
-            <Button
-              type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700"
-              disabled={loading}
-            >
-              {loading ? "Loading..." : isSignUp ? "Create Account" : "Sign In"}
-            </Button>
-          </form>
+              {isSignUp && (
+                <div>
+                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                  />
+                </div>
+              )}
+
+              {error && (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              <Button
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-700"
+                disabled={loading}
+              >
+                {loading
+                  ? "Loading..."
+                  : isSignUp
+                  ? "Create Account"
+                  : "Sign In"}
+              </Button>
+            </form>
+          )}
 
           {!isSignUp && (
             <div className="mt-4 text-center">

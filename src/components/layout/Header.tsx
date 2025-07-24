@@ -96,6 +96,12 @@ export const Header = () => {
             >
               Get Quote
             </Link>
+            <Link
+              to="/company-plans"
+              className="text-gray-700 hover:text-blue-600 transition-colors"
+            >
+              Plans
+            </Link>
             {user ? (
               <>
                 <Link
@@ -164,6 +170,12 @@ export const Header = () => {
                 className="text-gray-700 hover:text-blue-600 transition-colors"
               >
                 Get Quote
+              </Link>
+              <Link
+                to="/company-plans"
+                className="text-gray-700 hover:text-blue-600 transition-colors"
+              >
+                Plans
               </Link>
               {user ? (
                 <>

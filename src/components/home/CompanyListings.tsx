@@ -15,27 +15,40 @@ import {
   ArrowRight,
 } from "lucide-react";
 
+interface Plan {
+  id: string;
+  name: string;
+}
+
 export const CompanyListings = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [goldPlanId, setGoldPlanId] = useState<string | null>(null);
+  const [platinumPlanId, setPlatinumPlanId] = useState<string | null>(null); // Added
+  const [silverPlanId, setSilverPlanId] = useState<string | null>(null); // Added
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchCompanies();
+    fetchPlansAndCompanies();
   }, []);
 
-  const fetchCompanies = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("companies")
-        .select("*")
-        .eq("is_active", true);
-      if (error) throw error;
-      setCompanies(data || []);
-    } catch (error) {
-      console.error("Error fetching companies:", error);
-    } finally {
-      setLoading(false);
-    }
+  const fetchPlansAndCompanies = async () => {
+    setLoading(true);
+    // Fetch plans
+    const { data: plansRaw } = await supabase.from("plans").select("id, name");
+    const plans: Plan[] = Array.isArray(plansRaw) ? (plansRaw as Plan[]) : [];
+    const goldPlan = plans.find((p) => p.name.toLowerCase() === "gold");
+    const platinumPlan = plans.find((p) => p.name.toLowerCase() === "platinum");
+    const silverPlan = plans.find((p) => p.name.toLowerCase() === "silver");
+    setGoldPlanId(goldPlan?.id || null);
+    setPlatinumPlanId(platinumPlan?.id || null);
+    setSilverPlanId(silverPlan?.id || null);
+    // Fetch companies
+    const { data: companiesData } = await supabase
+      .from("companies")
+      .select("*")
+      .eq("is_active", true);
+    setCompanies(companiesData || []);
+    setLoading(false);
   };
 
   if (loading) {
@@ -66,25 +79,31 @@ export const CompanyListings = () => {
     return result;
   };
 
-  // Top Ranked: top 3 by review_count
-  const topRankedSorted = [...companies].sort(
-    (a, b) => b.review_count - a.review_count
+  // Top Ranked: Only companies with Gold plan, sorted by review_count
+  const goldCompanies = companies.filter((c) => c.plan_id === goldPlanId);
+  const topRankedCompanies = getAndMark(
+    [...goldCompanies].sort((a, b) => b.review_count - a.review_count),
+    3
   );
-  const topRankedCompanies = getAndMark(topRankedSorted, 3);
 
-  // Popular: top 3 by rating (excluding already shown)
+  // Popular: Top 3 by rating, not already shown
   const popularSorted = [...companies].sort((a, b) => b.rating - a.rating);
   const popularCompanies = getAndMark(popularSorted, 3);
 
-  // Premium: top 3 by (rating * review_count), only if review_count >= 5 and rating >= 4
-  const premiumSorted = [...companies]
-    .filter((c) => c.review_count >= 5 && c.rating >= 4)
-    .sort((a, b) => b.rating * b.review_count - a.rating * a.review_count);
+  // Premium: Only companies with Platinum plan, top 3 by rating * review_count, not already shown
+  const platinumCompanies = companies.filter(
+    (c) => c.plan_id === platinumPlanId
+  );
+  const premiumSorted = [...platinumCompanies].sort(
+    (a, b) => b.rating * b.review_count - a.rating * a.review_count
+  );
   const premiumCompanies = getAndMark(premiumSorted, 3);
 
-  // Featured: next 3 random companies not already shown
-  const remaining = companies.filter((c) => !usedCompanyIds.has(c.id));
-  const featuredCompanies = remaining
+  // Featured: Only companies with Silver plan, 3 random, not already shown
+  const silverCompanies = companies.filter(
+    (c) => c.plan_id === silverPlanId && !usedCompanyIds.has(c.id)
+  );
+  const featuredCompanies = silverCompanies
     .sort(() => 0.5 - Math.random())
     .slice(0, 3);
 

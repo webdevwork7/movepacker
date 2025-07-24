@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useAuth } from "@/hooks/useAuth";
 import { Gem, Crown, Star } from "lucide-react";
 
 interface Plan {
@@ -13,9 +15,12 @@ interface Plan {
   features: string[];
 }
 
-export const PlansSection = () => {
+export const CompanyPlans = () => {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selecting, setSelecting] = useState<string | null>(null);
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchPlans();
@@ -30,35 +35,52 @@ export const PlansSection = () => {
     setLoading(false);
   };
 
-  if (loading) return null;
+  const handleSelectPlan = async (planId: string) => {
+    if (!user) return;
+    setSelecting(planId);
+    // Get company by user_id
+    const { data: company, error } = await supabase
+      .from("companies")
+      .select("id")
+      .eq("user_id", user.id)
+      .single();
+    if (!error && company) {
+      await supabase
+        .from("companies")
+        .update({ plan_id: planId })
+        .eq("id", company.id);
+      navigate("/company");
+    }
+    setSelecting(null);
+  };
+
+  if (loading) return <div className="text-center py-16">Loading plans...</div>;
 
   return (
-    <div className="bg-gradient-to-b from-blue-50 to-white py-20 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-yellow-50 py-16 px-4 relative overflow-hidden">
       {/* Decorative floating shapes */}
       <div className="absolute top-0 left-0 w-72 h-72 bg-gradient-to-br from-yellow-200 via-yellow-100 to-transparent rounded-full blur-2xl opacity-40 -z-10 animate-pulse" />
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-tr from-blue-200 via-blue-100 to-transparent rounded-full blur-2xl opacity-30 -z-10 animate-pulse" />
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full mb-6 shadow-lg transform hover:scale-105 transition-transform duration-300">
-            <span className="text-3xl text-white font-bold">$</span>
-          </div>
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
-            Our Plans & Pricing
-          </h2>
-          <p className="text-gray-600 max-w-2xl mx-auto text-lg">
-            Choose the plan that fits your business. Upgrade anytime for more
-            features and visibility!
+          <h1 className="text-4xl md:text-5xl font-extrabold text-gray-800 mb-4 tracking-tight drop-shadow-lg">
+            Choose Your Plan
+          </h1>
+          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+            Select the plan that best fits your company. Upgrade anytime for
+            more features and visibility!
           </p>
-          <div className="w-24 h-1 bg-gradient-to-r from-blue-600 to-indigo-600 mx-auto mt-4"></div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-5xl mx-auto">
           {plans.map((plan) => {
+            // Plan-specific styles
             let cardClass = "";
             let icon = null;
-            let badgeTab = null;
+            const badge = null;
             let priceClass = "";
             let bgClass = "";
             let btnClass = "";
+            let badgeTab = null;
             if (plan.name.toLowerCase() === "gold") {
               cardClass =
                 "border-yellow-400 shadow-2xl bg-gradient-to-br from-yellow-50 via-white to-yellow-100 animate-gold-glow";
@@ -120,8 +142,8 @@ export const PlansSection = () => {
             return (
               <Card
                 key={plan.id}
-                className={`relative border-2 rounded-3xl overflow-visible transition-transform duration-300 hover:scale-105 ${cardClass} ${bgClass} shadow-xl hover:shadow-2xl`}
-                style={{ minHeight: 500, paddingTop: 32 }}
+                className={`relative border-2 rounded-3xl overflow-visible transition-transform duration-300 hover:scale-105 ${cardClass} ${bgClass} shadow-xl hover:shadow-2xl`} // overflow-visible for badge
+                style={{ minHeight: 500, paddingTop: 32 }} // extra top padding for badge
               >
                 {badgeTab}
                 <CardContent className="p-10 flex flex-col items-center relative pt-8">
@@ -160,10 +182,17 @@ export const PlansSection = () => {
                       ))}
                   </ul>
                   <Button
-                    className={`w-full py-3 text-lg font-bold rounded-xl transition-all duration-200 ${btnClass}`}
-                    onClick={() => (window.location.href = "/auth?mode=signup")}
+                    className={`w-full py-3 text-lg font-bold rounded-xl transition-all duration-200 ${btnClass} ${
+                      selecting === plan.id
+                        ? "opacity-60 cursor-not-allowed"
+                        : ""
+                    }`}
+                    onClick={() => handleSelectPlan(plan.id)}
+                    disabled={selecting === plan.id}
                   >
-                    Get Started
+                    {selecting === plan.id
+                      ? "Selecting..."
+                      : `Choose ${plan.name}`}
                   </Button>
                 </CardContent>
               </Card>

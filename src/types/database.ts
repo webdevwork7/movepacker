@@ -13,6 +13,7 @@ export interface Company {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  plan_id?: string;
 }
 
 export interface Lead {
