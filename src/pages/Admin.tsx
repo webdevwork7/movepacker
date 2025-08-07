@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { Company, Lead, AdminSettings } from "@/types/database";
+import { Company, Lead, AdminSettings, Plan } from "@/types/database";
 import {
   Settings,
   Users,
@@ -25,6 +25,8 @@ import {
   SortAsc,
   SortDesc,
   Star,
+  Edit,
+  Trash2,
 } from "lucide-react";
 import {
   Select,
@@ -59,6 +61,7 @@ type SortOrder = "asc" | "desc";
 export const Admin = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [plans, setPlans] = useState<Plan[]>([]);
   const [settings, setSettings] = useState<AdminSettings>({});
   const [activeTab, setActiveTab] = useState("dashboard");
   const [searchTerm, setSearchTerm] = useState("");
@@ -71,9 +74,20 @@ export const Admin = () => {
   const { toast } = useToast();
   const { user, isAdmin, signOut } = useAuth();
 
+  // Plan mapping based on the provided plan data
+  const planMapping: { [key: string]: string } = {
+    "58a35b88-5010-404a-9ec4-ffbc370c90a0": "Gold",
+    "5cda54bc-509a-43fd-8706-200cd6d83bdd": "Platinum",
+    "071ad825-e97c-4597-a554-75c1655556be": "Silver",
+  };
+
   // Add handlers and state for editing/deleting leads
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [editForm, setEditForm] = useState<Partial<Lead>>({});
+
+  // Add handlers and state for editing/deleting companies
+  const [editingCompany, setEditingCompany] = useState<Company | null>(null);
+  const [editCompanyForm, setEditCompanyForm] = useState<Partial<Company>>({});
 
   const handleEditLead = (lead: Lead) => {
     setEditingLead(lead);
@@ -105,6 +119,13 @@ export const Admin = () => {
   };
 
   const handleDeleteLead = async (leadId: string) => {
+    if (
+      !confirm(
+        "Are you sure you want to delete this lead? This action cannot be undone."
+      )
+    ) {
+      return;
+    }
     try {
       const { error } = await supabase.from("leads").delete().eq("id", leadId);
       if (error) throw error;
@@ -112,6 +133,63 @@ export const Admin = () => {
       fetchData();
     } catch (error: unknown) {
       let message = "Failed to delete lead";
+      if (error && typeof error === "object" && "message" in error) {
+        message = (error as { message: string }).message;
+      }
+      toast({ title: "Error", description: message, variant: "destructive" });
+    }
+  };
+
+  // Company edit and delete handlers
+  const handleEditCompany = (company: Company) => {
+    setEditingCompany(company);
+    setEditCompanyForm(company);
+  };
+
+  const handleEditCompanyFormChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setEditCompanyForm({ ...editCompanyForm, [e.target.name]: e.target.value });
+  };
+
+  const handleSaveEditCompany = async () => {
+    if (!editingCompany) return;
+    try {
+      const { error } = await supabase
+        .from("companies")
+        .update(editCompanyForm)
+        .eq("id", editingCompany.id);
+      if (error) throw error;
+      toast({ title: "Company updated successfully" });
+      setEditingCompany(null);
+      fetchData();
+    } catch (error: unknown) {
+      let message = "Failed to update company";
+      if (error && typeof error === "object" && "message" in error) {
+        message = (error as { message: string }).message;
+      }
+      toast({ title: "Error", description: message, variant: "destructive" });
+    }
+  };
+
+  const handleDeleteCompany = async (companyId: string) => {
+    if (
+      !confirm(
+        "Are you sure you want to delete this company? This action cannot be undone."
+      )
+    ) {
+      return;
+    }
+    try {
+      const { error } = await supabase
+        .from("companies")
+        .delete()
+        .eq("id", companyId);
+      if (error) throw error;
+      toast({ title: "Company deleted successfully" });
+      fetchData();
+    } catch (error: unknown) {
+      let message = "Failed to delete company";
       if (error && typeof error === "object" && "message" in error) {
         message = (error as { message: string }).message;
       }
@@ -147,6 +225,12 @@ export const Admin = () => {
         .select("*")
         .order("created_at", { ascending: false });
 
+      // Fetch plans
+      const { data: plansData } = await supabase
+        .from("plans")
+        .select("*")
+        .order("priority", { ascending: true });
+
       // Fetch settings
       const { data: settingsData } = await supabase
         .from("settings")
@@ -154,6 +238,7 @@ export const Admin = () => {
 
       setCompanies(companiesData || []);
       setLeads(leadsData || []);
+      setPlans((plansData as Plan[]) || []);
 
       const settingsObj: AdminSettings = {};
       settingsData?.forEach((setting) => {
@@ -163,6 +248,11 @@ export const Admin = () => {
     } catch (error) {
       console.error("Error fetching data:", error);
     }
+  };
+
+  const getPlanName = (planId: string | null | undefined): string => {
+    if (!planId) return "N/A";
+    return planMapping[planId] || "N/A";
   };
 
   const handleApproveCompany = async (companyId: string) => {
@@ -835,6 +925,7 @@ export const Admin = () => {
                         <TableHead>Contact</TableHead>
                         <TableHead>Location</TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead>Plan</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -876,6 +967,7 @@ export const Admin = () => {
                               {company.is_active ? "Approved" : "Inactive"}
                             </Badge>
                           </TableCell>
+                          <TableCell>{getPlanName(company.plan_id)}</TableCell>
                           <TableCell>
                             <div className="flex gap-2">
                               {company.is_active ? (
@@ -901,6 +993,23 @@ export const Admin = () => {
                                   Approve
                                 </Button>
                               )}
+                              <Button
+                                onClick={() => handleEditCompany(company)}
+                                variant="outline"
+                                size="sm"
+                              >
+                                <Edit className="w-4 h-4 mr-1" />
+                                Edit
+                              </Button>
+                              <Button
+                                onClick={() => handleDeleteCompany(company.id)}
+                                variant="outline"
+                                size="sm"
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="w-4 h-4 mr-1" />
+                                Delete
+                              </Button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -1120,6 +1229,112 @@ export const Admin = () => {
                 Save
               </Button>
               <Button onClick={() => setEditingLead(null)} variant="secondary">
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      {editingCompany && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setEditingCompany(null);
+          }}
+        >
+          <div
+            className="bg-white p-6 rounded shadow-lg w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-bold mb-4">Edit Company</h2>
+            <div className="space-y-2">
+              <Input
+                name="name"
+                value={editCompanyForm.name || ""}
+                onChange={handleEditCompanyFormChange}
+                placeholder="Company Name"
+              />
+              <Input
+                name="email"
+                value={editCompanyForm.email || ""}
+                onChange={handleEditCompanyFormChange}
+                placeholder="Email"
+              />
+              <Input
+                name="phone"
+                value={editCompanyForm.phone || ""}
+                onChange={handleEditCompanyFormChange}
+                placeholder="Phone"
+              />
+              <Input
+                name="city"
+                value={editCompanyForm.city || ""}
+                onChange={handleEditCompanyFormChange}
+                placeholder="City"
+              />
+              <Input
+                name="state"
+                value={editCompanyForm.state || ""}
+                onChange={handleEditCompanyFormChange}
+                placeholder="State"
+              />
+              <div>
+                <label className="text-sm font-medium">Plan:</label>
+                <Select
+                  value={editCompanyForm.plan_id || ""}
+                  onValueChange={(value) =>
+                    setEditCompanyForm({ ...editCompanyForm, plan_id: value })
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select Plan" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {plans.map((plan) => (
+                      <SelectItem key={plan.id} value={plan.id}>
+                        {plan.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Input
+                name="rating"
+                type="number"
+                step="0.1"
+                min="0"
+                max="5"
+                value={editCompanyForm.rating || ""}
+                onChange={handleEditCompanyFormChange}
+                placeholder="Rating (0-5)"
+              />
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium">Active Status:</label>
+                <input
+                  type="checkbox"
+                  name="is_active"
+                  checked={editCompanyForm.is_active || false}
+                  onChange={(e) =>
+                    setEditCompanyForm({
+                      ...editCompanyForm,
+                      is_active: e.target.checked,
+                    })
+                  }
+                  className="w-4 h-4"
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 mt-4">
+              <Button
+                onClick={handleSaveEditCompany}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                Save
+              </Button>
+              <Button
+                onClick={() => setEditingCompany(null)}
+                variant="secondary"
+              >
                 Cancel
               </Button>
             </div>

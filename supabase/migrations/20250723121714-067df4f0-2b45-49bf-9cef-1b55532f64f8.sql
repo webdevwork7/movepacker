@@ -50,3 +50,30 @@ INSERT INTO public.reviews (company_id, customer_name, customer_email, rating, r
 UPDATE public.admin_users 
 SET password_hash = '$2b$10$8K1p/a0dChGBF7CRfWfO3.5XQrFNkOe6l3XWvXcZYQQsWKOZSMHga'
 WHERE email = 'admin@gmail.com';
+
+-- Create plans table
+CREATE TABLE public.plans (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  description TEXT,
+  priority INTEGER DEFAULT 0,
+  price DECIMAL(10,2) NOT NULL,
+  features TEXT[],
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+
+-- Add plan_id column to companies table
+ALTER TABLE public.companies ADD COLUMN plan_id UUID REFERENCES public.plans(id);
+
+-- Insert default plans
+INSERT INTO public.plans (id, name, description, priority, price, features) VALUES 
+('071ad825-e97c-4597-a554-75c1655556be', 'Silver', 'Basic plan with essential features', 1, 99.00, ARRAY['Basic listing', 'Email support', 'Standard visibility']),
+('58a35b88-5010-404a-9ec4-ffbc370c90a0', 'Gold', 'Premium plan with enhanced features', 2, 199.00, ARRAY['Enhanced listing', 'Priority support', 'Featured placement', 'Analytics dashboard']),
+('5cda54bc-509a-43fd-8706-200cd6d83bdd', 'Platinum', 'Ultimate plan with all features', 3, 299.00, ARRAY['Premium listing', '24/7 support', 'Top placement', 'Advanced analytics', 'Custom branding', 'Priority leads']);
+
+-- Enable RLS for plans table
+ALTER TABLE public.plans ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies for plans
+CREATE POLICY "Anyone can view plans" ON public.plans
+  FOR SELECT USING (true);

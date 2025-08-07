@@ -125,6 +125,7 @@ export type Database = {
           is_active: boolean | null
           name: string
           phone: string
+          plan_id: string | null
           rating: number | null
           review_count: number | null
           state: string | null
@@ -141,6 +142,7 @@ export type Database = {
           is_active?: boolean | null
           name: string
           phone: string
+          plan_id?: string | null
           rating?: number | null
           review_count?: number | null
           state?: string | null
@@ -157,13 +159,22 @@ export type Database = {
           is_active?: boolean | null
           name?: string
           phone?: string
+          plan_id?: string | null
           rating?: number | null
           review_count?: number | null
           state?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "companies_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       lead_assignments: {
         Row: {
@@ -296,6 +307,36 @@ export type Database = {
           key?: string
           updated_at?: string | null
           value?: string
+        }
+        Relationships: []
+      }
+      plans: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          priority: number
+          price: number
+          features: string[]
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          priority?: number
+          price: number
+          features?: string[]
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          priority?: number
+          price?: number
+          features?: string[]
+          created_at?: string | null
         }
         Relationships: []
       }

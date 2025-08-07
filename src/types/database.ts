@@ -77,3 +77,13 @@ export interface AdminSettings {
   support_email?: string;
   support_phone?: string;
 }
+
+export interface Plan {
+  id: string;
+  name: string;
+  description: string;
+  priority: number;
+  price: number;
+  features: string[];
+  created_at: string;
+}
