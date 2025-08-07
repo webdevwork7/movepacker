@@ -19,7 +19,7 @@ import {
   DollarSign,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Quote = () => {
@@ -31,7 +31,6 @@ export const Quote = () => {
   const [toLocation, setToLocation] = useState(searchParams.get("to") || "");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -53,18 +52,17 @@ export const Quote = () => {
       });
       if (error) throw error;
 
-      toast({
-        title: "Quote Request Submitted!",
+      toast.success("Request Submitted!", {
         description:
-          "We'll get back to you with quotes from our top movers soon.",
-        variant: "default",
+          "Your request has been successfully submitted! We will contact you within 24 hours.",
+        duration: 2000,
       });
-      navigate("/");
+      setTimeout(() => {
+        navigate("/");
+      }, 2000);
     } catch (error) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Something went wrong. Please try again.",
-        variant: "destructive",
       });
     } finally {
       setLoading(false);
