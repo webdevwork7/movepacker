@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { Company, Lead, Bid, AdminSettings } from "@/types/database";
+import { Company, Lead, AdminSettings } from "@/types/database";
 import {
   Settings,
   Users,
@@ -24,6 +24,7 @@ import {
   Filter,
   SortAsc,
   SortDesc,
+  Star,
 } from "lucide-react";
 import {
   Select,
@@ -50,6 +51,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { format, parseISO } from "date-fns";
 
 type DataType = "companies" | "leads" | "bids";
 type SortOrder = "asc" | "desc";
@@ -57,7 +59,6 @@ type SortOrder = "asc" | "desc";
 export const Admin = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
-  const [bids, setBids] = useState<Bid[]>([]);
   const [settings, setSettings] = useState<AdminSettings>({});
   const [activeTab, setActiveTab] = useState("dashboard");
   const [searchTerm, setSearchTerm] = useState("");
@@ -69,6 +70,54 @@ export const Admin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, isAdmin, signOut } = useAuth();
+
+  // Add handlers and state for editing/deleting leads
+  const [editingLead, setEditingLead] = useState<Lead | null>(null);
+  const [editForm, setEditForm] = useState<Partial<Lead>>({});
+
+  const handleEditLead = (lead: Lead) => {
+    setEditingLead(lead);
+    setEditForm(lead);
+  };
+
+  const handleEditFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditForm({ ...editForm, [e.target.name]: e.target.value });
+  };
+
+  const handleSaveEditLead = async () => {
+    if (!editingLead) return;
+    try {
+      const { error } = await supabase
+        .from("leads")
+        .update(editForm)
+        .eq("id", editingLead.id);
+      if (error) throw error;
+      toast({ title: "Lead updated" });
+      setEditingLead(null);
+      fetchData();
+    } catch (error: unknown) {
+      let message = "Failed to update lead";
+      if (error && typeof error === "object" && "message" in error) {
+        message = (error as { message: string }).message;
+      }
+      toast({ title: "Error", description: message, variant: "destructive" });
+    }
+  };
+
+  const handleDeleteLead = async (leadId: string) => {
+    try {
+      const { error } = await supabase.from("leads").delete().eq("id", leadId);
+      if (error) throw error;
+      toast({ title: "Lead deleted" });
+      fetchData();
+    } catch (error: unknown) {
+      let message = "Failed to delete lead";
+      if (error && typeof error === "object" && "message" in error) {
+        message = (error as { message: string }).message;
+      }
+      toast({ title: "Error", description: message, variant: "destructive" });
+    }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -82,7 +131,7 @@ export const Admin = () => {
     }
 
     fetchData();
-  }, [user, isAdmin]);
+  }, [user, isAdmin, navigate]);
 
   const fetchData = async () => {
     try {
@@ -98,14 +147,6 @@ export const Admin = () => {
         .select("*")
         .order("created_at", { ascending: false });
 
-      // Fetch bids
-      const { data: bidsData } = await supabase
-        .from("bids")
-        .select(
-          "id, company_id, lead_id, amount, position, status, utr_number, payment_verified, message, created_at, companies(name)"
-        )
-        .order("created_at", { ascending: false });
-
       // Fetch settings
       const { data: settingsData } = await supabase
         .from("settings")
@@ -113,21 +154,6 @@ export const Admin = () => {
 
       setCompanies(companiesData || []);
       setLeads(leadsData || []);
-      setBids(
-        (bidsData as any[] | null)?.map((bid) => ({
-          id: bid.id,
-          company_id: bid.company_id,
-          lead_id: bid.lead_id,
-          amount: bid.amount,
-          position: bid.position,
-          status: bid.status as "pending" | "approved" | "rejected",
-          utr_number: bid.utr_number,
-          payment_verified: bid.payment_verified,
-          message: bid.message,
-          created_at: bid.created_at,
-          companies: bid.companies ? { name: bid.companies.name } : undefined,
-        })) || []
-      );
 
       const settingsObj: AdminSettings = {};
       settingsData?.forEach((setting) => {
@@ -154,12 +180,12 @@ export const Admin = () => {
       });
 
       fetchData();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to approve company",
-        variant: "destructive",
-      });
+    } catch (error: unknown) {
+      let message = "Failed to approve company";
+      if (error && typeof error === "object" && "message" in error) {
+        message = (error as { message: string }).message;
+      }
+      toast({ title: "Error", description: message, variant: "destructive" });
     }
   };
 
@@ -178,12 +204,12 @@ export const Admin = () => {
       });
 
       fetchData();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to reject company",
-        variant: "destructive",
-      });
+    } catch (error: unknown) {
+      let message = "Failed to reject company";
+      if (error && typeof error === "object" && "message" in error) {
+        message = (error as { message: string }).message;
+      }
+      toast({ title: "Error", description: message, variant: "destructive" });
     }
   };
 
@@ -192,48 +218,7 @@ export const Admin = () => {
     navigate("/");
   };
 
-  const handleApproveBid = async (
-    bidId: string,
-    leadId: string,
-    companyId: string
-  ) => {
-    try {
-      // Approve the selected bid
-      const { error: approveError } = await supabase
-        .from("bids")
-        .update({ status: "approved" })
-        .eq("id", bidId);
-      if (approveError) throw approveError;
-
-      // Reject all other bids for the same lead
-      const { error: rejectError } = await supabase
-        .from("bids")
-        .update({ status: "rejected" })
-        .eq("lead_id", leadId)
-        .neq("id", bidId);
-      if (rejectError) throw rejectError;
-
-      // Increment review_count for the winning company
-      await supabase.rpc("increment_review_count", {
-        company_id_input: companyId,
-      });
-
-      toast({
-        title: "Bid Approved",
-        description:
-          "This bid has been approved and all others for this lead have been rejected. The company review count has been updated.",
-      });
-      fetchData();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to approve bid",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const getFilteredData = <T extends Company | Lead | Bid>(
+  const getFilteredData = <T extends Company | Lead>(
     data: T[],
     type: DataType
   ): T[] => {
@@ -254,10 +239,6 @@ export const Admin = () => {
               (item as Lead).name.toLowerCase().includes(searchLower) ||
               (item as Lead).email.toLowerCase().includes(searchLower)
             );
-          case "bids":
-            return (item as Bid).companies?.name
-              .toLowerCase()
-              .includes(searchLower);
           default:
             return true;
         }
@@ -272,8 +253,6 @@ export const Admin = () => {
             return filterStatus === "active"
               ? (item as Company).is_active
               : !(item as Company).is_active;
-          case "bids":
-            return (item as Bid).status === filterStatus;
           default:
             return true;
         }
@@ -293,7 +272,7 @@ export const Admin = () => {
     return filtered;
   };
 
-  const getFilteredAndPaginatedData = <T extends Company | Lead | Bid>(
+  const getFilteredAndPaginatedData = <T extends Company | Lead>(
     data: T[],
     type: DataType
   ): { items: T[]; totalPages: number } => {
@@ -367,6 +346,47 @@ export const Admin = () => {
     );
   };
 
+  // Dashboard stats helpers
+  const getLeadsPerMonth = () => {
+    const counts: { [key: string]: number } = {};
+    leads.forEach((lead) => {
+      const month = format(parseISO(lead.created_at), "yyyy-MM");
+      counts[month] = (counts[month] || 0) + 1;
+    });
+    // Sort months chronologically
+    const sortedMonths = Object.keys(counts).sort();
+    return {
+      labels: sortedMonths,
+      data: sortedMonths.map((m) => counts[m]),
+    };
+  };
+
+  const getLeadsStats = () => {
+    const now = new Date();
+    const thisMonth = format(now, "yyyy-MM");
+    const lastMonth = format(
+      new Date(now.getFullYear(), now.getMonth() - 1, 1),
+      "yyyy-MM"
+    );
+    let totalThisMonth = 0;
+    let totalLastMonth = 0;
+    const monthCounts: { [key: string]: number } = {};
+    leads.forEach((lead) => {
+      const month = format(parseISO(lead.created_at), "yyyy-MM");
+      monthCounts[month] = (monthCounts[month] || 0) + 1;
+      if (month === thisMonth) totalThisMonth++;
+      if (month === lastMonth) totalLastMonth++;
+    });
+    const avgPerMonth =
+      Object.values(monthCounts).reduce((a, b) => a + b, 0) /
+      (Object.keys(monthCounts).length || 1);
+    return {
+      totalThisMonth,
+      totalLastMonth,
+      avgPerMonth: Math.round(avgPerMonth),
+    };
+  };
+
   const renderDashboardCharts = () => {
     const companyStats = {
       labels: ["Active", "Inactive"],
@@ -381,31 +401,8 @@ export const Admin = () => {
       ],
     };
 
-    const bidStats = {
-      labels: ["Pending", "Approved", "Rejected"],
-      datasets: [
-        {
-          data: [
-            bids.filter((b) => b.status === "pending").length,
-            bids.filter((b) => b.status === "approved").length,
-            bids.filter((b) => b.status === "rejected").length,
-          ],
-          backgroundColor: ["#f59e0b", "#22c55e", "#ef4444"],
-        },
-      ],
-    };
-
-    const leadTrend = {
-      labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
-      datasets: [
-        {
-          label: "Leads",
-          data: [30, 45, 57, 52, 65, 70],
-          borderColor: "#3b82f6",
-          tension: 0.3,
-        },
-      ],
-    };
+    const leadsPerMonth = getLeadsPerMonth();
+    const leadsStats = getLeadsStats();
 
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -419,18 +416,47 @@ export const Admin = () => {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Bid Status Distribution</CardTitle>
+            <CardTitle>Leads Per Month</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartComponent type="pie" data={bidStats} />
+            <ChartComponent
+              type="bar"
+              data={{
+                labels: leadsPerMonth.labels,
+                datasets: [
+                  {
+                    label: "Leads",
+                    data: leadsPerMonth.data,
+                    backgroundColor: "#3b82f6",
+                  },
+                ],
+              }}
+            />
           </CardContent>
         </Card>
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Lead Trend</CardTitle>
+            <CardTitle>Leads Stats</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartComponent type="line" data={leadTrend} />
+            <div className="flex flex-wrap gap-8">
+              <div>
+                <p className="text-2xl font-bold">
+                  {leadsStats.totalThisMonth}
+                </p>
+                <p className="text-gray-600">Leads this month</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold">
+                  {leadsStats.totalLastMonth}
+                </p>
+                <p className="text-gray-600">Leads last month</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{leadsStats.avgPerMonth}</p>
+                <p className="text-gray-600">Avg. leads/month</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -504,7 +530,6 @@ export const Admin = () => {
             { id: "dashboard", label: "Dashboard", icon: TrendingUp },
             { id: "companies", label: "Companies", icon: Users },
             { id: "leads", label: "Leads", icon: FileText },
-            { id: "bids", label: "Bids", icon: DollarSign },
             { id: "settings", label: "Settings", icon: Settings },
           ].map((tab) => (
             <Button
@@ -549,19 +574,6 @@ export const Admin = () => {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-gray-600">Pending Bids</p>
-                      <p className="text-3xl font-bold">
-                        {bids.filter((b) => b.status === "pending").length}
-                      </p>
-                    </div>
-                    <DollarSign className="w-8 h-8 text-orange-600" />
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
                       <p className="text-gray-600">Active Companies</p>
                       <p className="text-3xl font-bold">
                         {companies.filter((c) => c.is_active).length}
@@ -571,9 +583,238 @@ export const Admin = () => {
                   </div>
                 </CardContent>
               </Card>
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-gray-600">Avg. Company Rating</p>
+                      <p className="text-3xl font-bold">
+                        {companies.length > 0
+                          ? (
+                              companies.reduce((sum, c) => sum + c.rating, 0) /
+                              companies.length
+                            ).toFixed(2)
+                          : "N/A"}
+                      </p>
+                    </div>
+                    <Star className="w-8 h-8 text-yellow-500" />
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
-            {renderDashboardCharts()}
+            {/* Advanced Dashboard Sections */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+              {/* Top Cities by Lead Volume */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Top Cities by Lead Volume</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ChartComponent
+                    type="bar"
+                    data={{
+                      labels: Object.entries(
+                        leads.reduce((acc, lead) => {
+                          acc[lead.from_location] =
+                            (acc[lead.from_location] || 0) + 1;
+                          return acc;
+                        }, {} as Record<string, number>)
+                      )
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 5)
+                        .map(([city]) => city),
+                      datasets: [
+                        {
+                          label: "Leads",
+                          data: Object.entries(
+                            leads.reduce((acc, lead) => {
+                              acc[lead.from_location] =
+                                (acc[lead.from_location] || 0) + 1;
+                              return acc;
+                            }, {} as Record<string, number>)
+                          )
+                            .sort((a, b) => b[1] - a[1])
+                            .slice(0, 5)
+                            .map(([, count]) => count),
+                          backgroundColor: "#6366f1",
+                        },
+                      ],
+                    }}
+                  />
+                </CardContent>
+              </Card>
+              {/* Company Growth Trend */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Company Growth Trend</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ChartComponent
+                    type="line"
+                    data={{
+                      labels: (() => {
+                        const counts: Record<string, number> = {};
+                        companies.forEach((c) => {
+                          const month = format(
+                            parseISO(c.created_at),
+                            "yyyy-MM"
+                          );
+                          counts[month] = (counts[month] || 0) + 1;
+                        });
+                        return Object.keys(counts).sort();
+                      })(),
+                      datasets: [
+                        {
+                          label: "New Companies",
+                          data: (() => {
+                            const counts: Record<string, number> = {};
+                            companies.forEach((c) => {
+                              const month = format(
+                                parseISO(c.created_at),
+                                "yyyy-MM"
+                              );
+                              counts[month] = (counts[month] || 0) + 1;
+                            });
+                            return Object.keys(counts)
+                              .sort()
+                              .map((m) => counts[m]);
+                          })(),
+                          borderColor: "#10b981",
+                          backgroundColor: "#6ee7b7",
+                          tension: 0.3,
+                        },
+                      ],
+                    }}
+                  />
+                </CardContent>
+              </Card>
+              {/* Leads by Destination State */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Leads by Destination State</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ChartComponent
+                    type="pie"
+                    data={{
+                      labels: Object.entries(
+                        leads.reduce((acc, lead) => {
+                          acc[lead.to_location] =
+                            (acc[lead.to_location] || 0) + 1;
+                          return acc;
+                        }, {} as Record<string, number>)
+                      )
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 6)
+                        .map(([state]) => state),
+                      datasets: [
+                        {
+                          data: Object.entries(
+                            leads.reduce((acc, lead) => {
+                              acc[lead.to_location] =
+                                (acc[lead.to_location] || 0) + 1;
+                              return acc;
+                            }, {} as Record<string, number>)
+                          )
+                            .sort((a, b) => b[1] - a[1])
+                            .slice(0, 6)
+                            .map(([, count]) => count),
+                          backgroundColor: [
+                            "#f59e42",
+                            "#3b82f6",
+                            "#10b981",
+                            "#6366f1",
+                            "#f43f5e",
+                            "#a21caf",
+                          ],
+                        },
+                      ],
+                    }}
+                  />
+                </CardContent>
+              </Card>
+              {/* Top Rated Companies */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Top Rated Companies</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {companies
+                      .slice()
+                      .sort((a, b) => b.rating - a.rating)
+                      .slice(0, 3)
+                      .map((company) => (
+                        <div
+                          key={company.id}
+                          className="flex items-center gap-4 p-2 bg-gray-50 rounded-lg shadow-sm"
+                        >
+                          <div className="flex flex-col flex-1">
+                            <span className="font-semibold text-lg">
+                              {company.name}
+                            </span>
+                            <span className="text-gray-500 text-sm">
+                              {company.city}, {company.state}
+                            </span>
+                          </div>
+                          <span className="text-yellow-500 font-bold text-xl flex items-center gap-1">
+                            <Star className="w-5 h-5" />{" "}
+                            {company.rating.toFixed(1)}
+                          </span>
+                        </div>
+                      ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Recent Leads Table */}
+            <div className="mt-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Leads</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full text-sm">
+                      <thead>
+                        <tr className="bg-gray-100">
+                          <th className="px-4 py-2 text-left">Name</th>
+                          <th className="px-4 py-2 text-left">Email</th>
+                          <th className="px-4 py-2 text-left">From</th>
+                          <th className="px-4 py-2 text-left">To</th>
+                          <th className="px-4 py-2 text-left">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {leads
+                          .slice()
+                          .sort(
+                            (a, b) =>
+                              parseISO(b.created_at).getTime() -
+                              parseISO(a.created_at).getTime()
+                          )
+                          .slice(0, 5)
+                          .map((lead) => (
+                            <tr key={lead.id} className="border-b">
+                              <td className="px-4 py-2">{lead.name}</td>
+                              <td className="px-4 py-2">{lead.email}</td>
+                              <td className="px-4 py-2">
+                                {lead.from_location}
+                              </td>
+                              <td className="px-4 py-2">{lead.to_location}</td>
+                              <td className="px-4 py-2">
+                                {lead.moving_date || "N/A"}
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         )}
 
@@ -632,27 +873,34 @@ export const Admin = () => {
                                 company.is_active ? "default" : "secondary"
                               }
                             >
-                              {company.is_active ? "Active" : "Inactive"}
+                              {company.is_active ? "Approved" : "Inactive"}
                             </Badge>
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-2">
-                              <Button
-                                onClick={() => handleApproveCompany(company.id)}
-                                className="bg-green-600 hover:bg-green-700"
-                                size="sm"
-                              >
-                                <Check className="w-4 h-4 mr-1" />
-                                Approve
-                              </Button>
-                              <Button
-                                onClick={() => handleRejectCompany(company.id)}
-                                variant="destructive"
-                                size="sm"
-                              >
-                                <X className="w-4 h-4 mr-1" />
-                                Reject
-                              </Button>
+                              {company.is_active ? (
+                                <Button
+                                  onClick={() =>
+                                    handleRejectCompany(company.id)
+                                  }
+                                  variant="destructive"
+                                  size="sm"
+                                >
+                                  <X className="w-4 h-4 mr-1" />
+                                  Reject
+                                </Button>
+                              ) : (
+                                <Button
+                                  onClick={() =>
+                                    handleApproveCompany(company.id)
+                                  }
+                                  className="bg-green-600 hover:bg-green-700"
+                                  size="sm"
+                                >
+                                  <Check className="w-4 h-4 mr-1" />
+                                  Approve
+                                </Button>
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>
@@ -686,6 +934,7 @@ export const Admin = () => {
                         <TableHead>Location</TableHead>
                         <TableHead>Moving Date</TableHead>
                         <TableHead>Message</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -726,6 +975,24 @@ export const Admin = () => {
                                 {lead.message || "No message"}
                               </p>
                             </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Button
+                                  onClick={() => handleEditLead(lead)}
+                                  className="bg-blue-600 hover:bg-blue-700"
+                                  size="sm"
+                                >
+                                  Edit
+                                </Button>
+                                <Button
+                                  onClick={() => handleDeleteLead(lead.id)}
+                                  variant="destructive"
+                                  size="sm"
+                                >
+                                  Delete
+                                </Button>
+                              </div>
+                            </TableCell>
                           </TableRow>
                         )
                       )}
@@ -741,92 +1008,7 @@ export const Admin = () => {
         )}
 
         {/* Bids Tab */}
-        {activeTab === "bids" && (
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Bids Management</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {renderTableControls()}
-                <div className="rounded-lg border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Company</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>UTR Number</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {getFilteredAndPaginatedData(bids, "bids").items.map(
-                        (bid) => (
-                          <TableRow key={bid.id}>
-                            <TableCell>
-                              <p className="font-medium">
-                                {bid.companies?.name}
-                              </p>
-                            </TableCell>
-                            <TableCell>${bid.amount}</TableCell>
-                            <TableCell>
-                              {bid.utr_number || "Not provided"}
-                            </TableCell>
-                            <TableCell>
-                              <Badge
-                                variant={
-                                  bid.status === "approved"
-                                    ? "default"
-                                    : bid.status === "rejected"
-                                    ? "destructive"
-                                    : "secondary"
-                                }
-                              >
-                                {bid.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex gap-2">
-                                <Button
-                                  onClick={() =>
-                                    handleApproveBid(
-                                      bid.id,
-                                      bid.lead_id,
-                                      bid.company_id
-                                    )
-                                  }
-                                  className="bg-green-600 hover:bg-green-700"
-                                  size="sm"
-                                >
-                                  <Check className="w-4 h-4 mr-1" />
-                                  Approve
-                                </Button>
-                                <Button
-                                  onClick={() => {
-                                    /* Handle reject bid */
-                                  }}
-                                  variant="destructive"
-                                  size="sm"
-                                >
-                                  <X className="w-4 h-4 mr-1" />
-                                  Reject
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-                {renderPagination(
-                  getFilteredAndPaginatedData(bids, "bids").totalPages
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        )}
+        {activeTab === "bids" && <></>}
 
         {/* Settings Tab */}
         {activeTab === "settings" && (
@@ -874,6 +1056,76 @@ export const Admin = () => {
           </div>
         )}
       </div>
+      {editingLead && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setEditingLead(null);
+          }}
+        >
+          <div
+            className="bg-white p-6 rounded shadow-lg w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-bold mb-4">Edit Lead</h2>
+            <div className="space-y-2">
+              <Input
+                name="name"
+                value={editForm.name || ""}
+                onChange={handleEditFormChange}
+                placeholder="Name"
+              />
+              <Input
+                name="email"
+                value={editForm.email || ""}
+                onChange={handleEditFormChange}
+                placeholder="Email"
+              />
+              <Input
+                name="phone"
+                value={editForm.phone || ""}
+                onChange={handleEditFormChange}
+                placeholder="Phone"
+              />
+              <Input
+                name="from_location"
+                value={editForm.from_location || ""}
+                onChange={handleEditFormChange}
+                placeholder="From Location"
+              />
+              <Input
+                name="to_location"
+                value={editForm.to_location || ""}
+                onChange={handleEditFormChange}
+                placeholder="To Location"
+              />
+              <Input
+                name="moving_date"
+                value={editForm.moving_date || ""}
+                onChange={handleEditFormChange}
+                placeholder="Moving Date"
+              />
+              <Input
+                name="message"
+                value={editForm.message || ""}
+                onChange={handleEditFormChange}
+                placeholder="Message"
+              />
+            </div>
+            <div className="flex gap-2 mt-4">
+              <Button
+                onClick={handleSaveEditLead}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                Save
+              </Button>
+              <Button onClick={() => setEditingLead(null)} variant="secondary">
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

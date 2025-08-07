@@ -31,7 +31,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(() => {
+    const stored = localStorage.getItem("isAdmin");
+    return stored === "true";
+  });
 
   useEffect(() => {
     const {
@@ -40,12 +43,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      // Restore isAdmin from localStorage on auth state change
+      const stored = localStorage.getItem("isAdmin");
+      setIsAdmin(stored === "true");
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      // Restore isAdmin from localStorage on session fetch
+      const stored = localStorage.getItem("isAdmin");
+      setIsAdmin(stored === "true");
     });
 
     return () => subscription.unsubscribe();
@@ -72,6 +81,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (!error) {
         setIsAdmin(true);
+        localStorage.setItem("isAdmin", "true");
       }
 
       return { error };
@@ -82,6 +92,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       email,
       password,
     });
+    localStorage.setItem("isAdmin", "false");
     return { error };
   };
 
@@ -136,6 +147,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signOut = async () => {
     await supabase.auth.signOut();
     setIsAdmin(false);
+    localStorage.removeItem("isAdmin");
   };
 
   return (
