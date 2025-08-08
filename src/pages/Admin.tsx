@@ -27,6 +27,7 @@ import {
   Star,
   Edit,
   Trash2,
+  Plus,
 } from "lucide-react";
 import {
   Select,
@@ -54,6 +55,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { format, parseISO } from "date-fns";
+import { Textarea } from "@/components/ui/textarea";
 
 type DataType = "companies" | "leads" | "bids";
 type SortOrder = "asc" | "desc";
@@ -74,6 +76,10 @@ export const Admin = () => {
   const { toast } = useToast();
   const { user, isAdmin, signOut } = useAuth();
 
+  // State for editing companies (fix ReferenceError)
+  const [editingCompany, setEditingCompany] = useState<Company | null>(null);
+  const [companyForm, setCompanyForm] = useState<Partial<Company>>({});
+
   // Plan mapping based on the provided plan data
   const planMapping: { [key: string]: string } = {
     "58a35b88-5010-404a-9ec4-ffbc370c90a0": "Gold",
@@ -84,10 +90,17 @@ export const Admin = () => {
   // Add handlers and state for editing/deleting leads
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [editForm, setEditForm] = useState<Partial<Lead>>({});
-
-  // Add handlers and state for editing/deleting companies
-  const [editingCompany, setEditingCompany] = useState<Company | null>(null);
-  const [editCompanyForm, setEditCompanyForm] = useState<Partial<Company>>({});
+  // New lead state
+  const [isAddingLeadOpen, setIsAddingLeadOpen] = useState(false);
+  const [newLeadForm, setNewLeadForm] = useState<Partial<Lead>>({
+    name: "",
+    email: "",
+    phone: "",
+    from_location: "",
+    to_location: "",
+    moving_date: "",
+    message: "",
+  });
 
   const handleEditLead = (lead: Lead) => {
     setEditingLead(lead);
@@ -140,27 +153,102 @@ export const Admin = () => {
     }
   };
 
+  const handleNewLeadChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setNewLeadForm({ ...newLeadForm, [e.target.name]: e.target.value });
+  };
+
+  const handleSaveNewLead = async () => {
+    try {
+      const payload = {
+        name: newLeadForm.name || "",
+        email: newLeadForm.email || "",
+        phone: newLeadForm.phone || "",
+        from_location: newLeadForm.from_location || "",
+        to_location: newLeadForm.to_location || "",
+        moving_date: newLeadForm.moving_date || null,
+        message: newLeadForm.message || null,
+      };
+      const { error } = await supabase.from("leads").insert(payload);
+      if (error) throw error;
+      toast({ title: "Lead added" });
+      setIsAddingLeadOpen(false);
+      setNewLeadForm({
+        name: "",
+        email: "",
+        phone: "",
+        from_location: "",
+        to_location: "",
+        moving_date: "",
+        message: "",
+      });
+      fetchData();
+    } catch (error: unknown) {
+      let message = "Failed to add lead";
+      if (error && typeof error === "object" && "message" in error) {
+        message = (error as { message: string }).message;
+      }
+      toast({ title: "Error", description: message, variant: "destructive" });
+    }
+  };
+
   // Company edit and delete handlers
   const handleEditCompany = (company: Company) => {
     setEditingCompany(company);
-    setEditCompanyForm(company);
+    setCompanyForm(company);
   };
 
-  const handleEditCompanyFormChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setEditCompanyForm({ ...editCompanyForm, [e.target.name]: e.target.value });
+  const handleCompanyFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    // Handle numeric fields safely
+    if (name === "rating") {
+      const parsed =
+        value === "" ? ("" as unknown as number) : parseFloat(value);
+      setCompanyForm((prev) => ({ ...prev, rating: parsed }));
+      return;
+    }
+    if (name === "review_count") {
+      const parsed =
+        value === "" ? ("" as unknown as number) : parseInt(value, 10);
+      setCompanyForm((prev) => ({ ...prev, review_count: parsed }));
+      return;
+    }
+    setCompanyForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSaveEditCompany = async () => {
     if (!editingCompany) return;
     try {
+      const updatePayload: Partial<Company> = {
+        name: companyForm.name,
+        phone: companyForm.phone,
+        email: companyForm.email,
+        address: companyForm.address,
+        city: companyForm.city,
+        state: companyForm.state,
+        rating:
+          typeof companyForm.rating === "number"
+            ? companyForm.rating
+            : parseFloat(String(companyForm.rating ?? editingCompany.rating)),
+        review_count:
+          typeof companyForm.review_count === "number"
+            ? companyForm.review_count
+            : parseInt(
+                String(companyForm.review_count ?? editingCompany.review_count),
+                10
+              ),
+        description: companyForm.description,
+      };
+
       const { error } = await supabase
         .from("companies")
-        .update(editCompanyForm)
+        .update(updatePayload)
         .eq("id", editingCompany.id);
+
       if (error) throw error;
-      toast({ title: "Company updated successfully" });
+
+      toast({ title: "Company updated" });
       setEditingCompany(null);
       fetchData();
     } catch (error: unknown) {
@@ -175,7 +263,7 @@ export const Admin = () => {
   const handleDeleteCompany = async (companyId: string) => {
     if (
       !confirm(
-        "Are you sure you want to delete this company? This action cannot be undone."
+        "Are you sure you want to deactivate this company? You can reactivate it later."
       )
     ) {
       return;
@@ -183,13 +271,13 @@ export const Admin = () => {
     try {
       const { error } = await supabase
         .from("companies")
-        .delete()
+        .update({ is_active: false })
         .eq("id", companyId);
       if (error) throw error;
-      toast({ title: "Company deleted successfully" });
+      toast({ title: "Company deactivated" });
       fetchData();
     } catch (error: unknown) {
-      let message = "Failed to delete company";
+      let message = "Failed to deactivate company";
       if (error && typeof error === "object" && "message" in error) {
         message = (error as { message: string }).message;
       }
@@ -970,6 +1058,13 @@ export const Admin = () => {
                           <TableCell>{getPlanName(company.plan_id)}</TableCell>
                           <TableCell>
                             <div className="flex gap-2">
+                              <Button
+                                onClick={() => handleEditCompany(company)}
+                                variant="outline"
+                                size="sm"
+                              >
+                                Edit
+                              </Button>
                               {company.is_active ? (
                                 <Button
                                   onClick={() =>
@@ -993,14 +1088,6 @@ export const Admin = () => {
                                   Approve
                                 </Button>
                               )}
-                              <Button
-                                onClick={() => handleEditCompany(company)}
-                                variant="outline"
-                                size="sm"
-                              >
-                                <Edit className="w-4 h-4 mr-1" />
-                                Edit
-                              </Button>
                               <Button
                                 onClick={() => handleDeleteCompany(company.id)}
                                 variant="outline"
@@ -1030,7 +1117,15 @@ export const Admin = () => {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Leads Management</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Leads Management</CardTitle>
+                  <Button
+                    className="bg-blue-600 hover:bg-blue-700"
+                    onClick={() => setIsAddingLeadOpen(true)}
+                  >
+                    Add Lead
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 {renderTableControls()}
@@ -1237,94 +1332,67 @@ export const Admin = () => {
       )}
       {editingCompany && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
           onClick={(e) => {
             if (e.target === e.currentTarget) setEditingCompany(null);
           }}
         >
           <div
-            className="bg-white p-6 rounded shadow-lg w-full max-w-md"
+            className="bg-white p-6 rounded shadow-lg w-full max-w-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-lg font-bold mb-4">Edit Company</h2>
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Input
                 name="name"
-                value={editCompanyForm.name || ""}
-                onChange={handleEditCompanyFormChange}
-                placeholder="Company Name"
-              />
-              <Input
-                name="email"
-                value={editCompanyForm.email || ""}
-                onChange={handleEditCompanyFormChange}
-                placeholder="Email"
+                value={companyForm.name || ""}
+                onChange={handleCompanyFormChange}
+                placeholder="Name"
               />
               <Input
                 name="phone"
-                value={editCompanyForm.phone || ""}
-                onChange={handleEditCompanyFormChange}
+                value={companyForm.phone || ""}
+                onChange={handleCompanyFormChange}
                 placeholder="Phone"
               />
               <Input
+                name="email"
+                value={companyForm.email || ""}
+                onChange={handleCompanyFormChange}
+                placeholder="Email"
+              />
+              <Input
+                name="address"
+                value={companyForm.address || ""}
+                onChange={handleCompanyFormChange}
+                placeholder="Address"
+              />
+              <Input
                 name="city"
-                value={editCompanyForm.city || ""}
-                onChange={handleEditCompanyFormChange}
+                value={companyForm.city || ""}
+                onChange={handleCompanyFormChange}
                 placeholder="City"
               />
               <Input
                 name="state"
-                value={editCompanyForm.state || ""}
-                onChange={handleEditCompanyFormChange}
+                value={companyForm.state || ""}
+                onChange={handleCompanyFormChange}
                 placeholder="State"
               />
-              <div>
-                <label className="text-sm font-medium">Plan:</label>
-                <Select
-                  value={editCompanyForm.plan_id || ""}
-                  onValueChange={(value) =>
-                    setEditCompanyForm({ ...editCompanyForm, plan_id: value })
-                  }
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select Plan" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {plans.map((plan) => (
-                      <SelectItem key={plan.id} value={plan.id}>
-                        {plan.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
               <Input
                 name="rating"
-                type="number"
-                step="0.1"
-                min="0"
-                max="5"
-                value={editCompanyForm.rating || ""}
-                onChange={handleEditCompanyFormChange}
+                value={companyForm.rating?.toString() || ""}
+                onChange={handleCompanyFormChange}
                 placeholder="Rating (0-5)"
               />
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium">Active Status:</label>
-                <input
-                  type="checkbox"
-                  name="is_active"
-                  checked={editCompanyForm.is_active || false}
-                  onChange={(e) =>
-                    setEditCompanyForm({
-                      ...editCompanyForm,
-                      is_active: e.target.checked,
-                    })
-                  }
-                  className="w-4 h-4"
-                />
-              </div>
+              <Input
+                name="review_count"
+                value={companyForm.review_count?.toString() || ""}
+                onChange={handleCompanyFormChange}
+                placeholder="Review Count"
+              />
             </div>
-            <div className="flex gap-2 mt-4">
+            <div className="flex gap-2 mt-4 justify-end">
               <Button
                 onClick={handleSaveEditCompany}
                 className="bg-blue-600 hover:bg-blue-700"
@@ -1333,6 +1401,82 @@ export const Admin = () => {
               </Button>
               <Button
                 onClick={() => setEditingCompany(null)}
+                variant="secondary"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Lead Modal */}
+      {isAddingLeadOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsAddingLeadOpen(false);
+          }}
+        >
+          <div
+            className="bg-white p-6 rounded shadow-lg w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-bold mb-4">Add Lead</h2>
+            <div className="space-y-2">
+              <Input
+                name="name"
+                value={newLeadForm.name || ""}
+                onChange={handleNewLeadChange}
+                placeholder="Name"
+              />
+              <Input
+                name="email"
+                value={newLeadForm.email || ""}
+                onChange={handleNewLeadChange}
+                placeholder="Email"
+              />
+              <Input
+                name="phone"
+                value={newLeadForm.phone || ""}
+                onChange={handleNewLeadChange}
+                placeholder="Phone"
+              />
+              <Input
+                name="from_location"
+                value={newLeadForm.from_location || ""}
+                onChange={handleNewLeadChange}
+                placeholder="From Location"
+              />
+              <Input
+                name="to_location"
+                value={newLeadForm.to_location || ""}
+                onChange={handleNewLeadChange}
+                placeholder="To Location"
+              />
+              <Input
+                name="moving_date"
+                type="date"
+                value={newLeadForm.moving_date || ""}
+                onChange={handleNewLeadChange}
+                placeholder="Moving Date"
+              />
+              <Textarea
+                name="message"
+                value={newLeadForm.message || ""}
+                onChange={handleNewLeadChange}
+                placeholder="Message"
+              />
+            </div>
+            <div className="flex gap-2 mt-4 justify-end">
+              <Button
+                onClick={handleSaveNewLead}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                Save
+              </Button>
+              <Button
+                onClick={() => setIsAddingLeadOpen(false)}
                 variant="secondary"
               >
                 Cancel

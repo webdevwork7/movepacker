@@ -13,6 +13,13 @@ import {
   Flame,
   Zap,
   ArrowRight,
+  Phone,
+  Mail,
+  MapPin,
+  X,
+  Shield,
+  Clock,
+  ThumbsUp,
 } from "lucide-react";
 
 interface Plan {
@@ -26,10 +33,21 @@ export const CompanyListings = () => {
   const [platinumPlanId, setPlatinumPlanId] = useState<string | null>(null); // Added
   const [silverPlanId, setSilverPlanId] = useState<string | null>(null); // Added
   const [loading, setLoading] = useState(true);
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
 
   useEffect(() => {
     fetchPlansAndCompanies();
   }, []);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSelectedCompany(null);
+    };
+    if (selectedCompany) {
+      window.addEventListener("keydown", onKeyDown);
+    }
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [selectedCompany]);
 
   const fetchPlansAndCompanies = async () => {
     setLoading(true);
@@ -86,9 +104,10 @@ export const CompanyListings = () => {
     3
   );
 
-  // Popular: Top 3 by rating, not already shown
-  const popularSorted = [...companies].sort((a, b) => b.rating - a.rating);
-  const popularCompanies = getAndMark(popularSorted, 3);
+  // Popular: Top 3 by review_count (highest), regardless of duplicates with other sections
+  const popularCompanies = [...companies]
+    .sort((a, b) => b.review_count - a.review_count)
+    .slice(0, 3);
 
   // Premium: Only companies with Platinum plan, top 3 by rating * review_count, not already shown
   const platinumCompanies = companies.filter(
@@ -162,14 +181,30 @@ export const CompanyListings = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {companies.slice(0, 10).map((company, index) => (
-              <CompanyCard
-                key={company.id}
-                company={company}
-                rank={index + 1}
-                isTopRanked={false}
-              />
-            ))}
+            {companies.length > 0 ? (
+              companies
+                .slice(0, 10)
+                .map((company, index) => (
+                  <CompanyCard
+                    key={company.id}
+                    company={company}
+                    rank={index + 1}
+                    isTopRanked={false}
+                    onClick={() => setSelectedCompany(company)}
+                  />
+                ))
+            ) : (
+              <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 text-center py-12">
+                <div className="inline-block bg-white/70 backdrop-blur rounded-xl px-6 py-4 shadow-sm">
+                  <p className="text-gray-700 text-lg font-medium">
+                    No companies available at the moment.
+                  </p>
+                  <p className="text-gray-500 text-sm">
+                    Please check back soon.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -192,42 +227,56 @@ export const CompanyListings = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-              {topRankedCompanies.map((company, index) => {
-                const rankStyle = getRankBadgeStyles(index + 1);
-                return (
-                  <div
-                    key={company.id}
-                    className={`relative ${rankStyle?.wrapperClass} transition-all duration-300`}
-                  >
-                    {/* Rank Badge */}
+              {topRankedCompanies.length > 0 ? (
+                topRankedCompanies.map((company, index) => {
+                  const rankStyle = getRankBadgeStyles(index + 1);
+                  return (
                     <div
-                      className={`absolute -top-6 left-1/2 transform -translate-x-1/2 z-30 ${rankStyle?.containerClass} text-white px-6 py-2 rounded-full shadow-lg flex items-center gap-2 whitespace-nowrap`}
+                      key={company.id}
+                      className={`relative ${rankStyle?.wrapperClass} transition-all duration-300`}
                     >
-                      <span className="text-2xl">{rankStyle?.icon}</span>
-                      <span className="font-bold">{rankStyle?.label}</span>
-                    </div>
-
-                    {/* Ribbon */}
-                    <div className="absolute -left-2 top-12 h-8">
+                      {/* Rank Badge */}
                       <div
-                        className={`${rankStyle?.ribbon} text-white px-4 py-1 shadow-md relative`}
+                        className={`absolute -top-6 left-1/2 transform -translate-x-1/2 z-30 ${rankStyle?.containerClass} text-white px-6 py-2 rounded-full shadow-lg flex items-center gap-2 whitespace-nowrap`}
                       >
-                        <div className="absolute left-0 -bottom-2 border-l-[8px] border-t-[8px] border-t-transparent"></div>
+                        <span className="text-2xl">{rankStyle?.icon}</span>
+                        <span className="font-bold">{rankStyle?.label}</span>
+                      </div>
+
+                      {/* Ribbon */}
+                      <div className="absolute -left-2 top-12 h-8">
+                        <div
+                          className={`${rankStyle?.ribbon} text-white px-4 py-1 shadow-md relative`}
+                        >
+                          <div className="absolute left-0 -bottom-2 border-l-[8px] border-t-[8px] border-t-transparent"></div>
+                        </div>
+                      </div>
+
+                      {/* Card */}
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-gradient-to-b from-white/50 to-transparent rounded-lg"></div>
+                        <CompanyCard
+                          company={company}
+                          rank={index + 1}
+                          isTopRanked={true}
+                          onClick={() => setSelectedCompany(company)}
+                        />
                       </div>
                     </div>
-
-                    {/* Card */}
-                    <div className="relative">
-                      <div className="absolute inset-0 bg-gradient-to-b from-white/50 to-transparent rounded-lg"></div>
-                      <CompanyCard
-                        company={company}
-                        rank={index + 1}
-                        isTopRanked={true}
-                      />
-                    </div>
+                  );
+                })
+              ) : (
+                <div className="col-span-1 md:col-span-3 text-center py-12">
+                  <div className="inline-block bg-white/70 backdrop-blur rounded-xl px-6 py-4 shadow-sm">
+                    <p className="text-gray-700 text-lg font-medium">
+                      No companies available at the moment.
+                    </p>
+                    <p className="text-gray-500 text-sm">
+                      Please check back soon.
+                    </p>
                   </div>
-                );
-              })}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -251,14 +300,28 @@ export const CompanyListings = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {premiumCompanies.map((company, index) => (
-                <CompanyCard
-                  key={company.id}
-                  company={company}
-                  rank={index + 4}
-                  isTopRanked={false}
-                />
-              ))}
+              {premiumCompanies.length > 0 ? (
+                premiumCompanies.map((company, index) => (
+                  <CompanyCard
+                    key={company.id}
+                    company={company}
+                    rank={index + 4}
+                    isTopRanked={false}
+                    onClick={() => setSelectedCompany(company)}
+                  />
+                ))
+              ) : (
+                <div className="col-span-3 text-center py-12">
+                  <div className="inline-block bg-white/70 backdrop-blur rounded-xl px-6 py-4 shadow-sm">
+                    <p className="text-gray-700 text-lg font-medium">
+                      No companies available at the moment.
+                    </p>
+                    <p className="text-gray-500 text-sm">
+                      Please check back soon.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -289,13 +352,19 @@ export const CompanyListings = () => {
                     company={company}
                     rank={index + 7}
                     isTopRanked={false}
+                    onClick={() => setSelectedCompany(company)}
                   />
                 ))
               ) : (
                 <div className="col-span-3 text-center py-12">
-                  <p className="text-gray-500 text-lg">
-                    No popular movers available at the moment.
-                  </p>
+                  <div className="inline-block bg-white/70 backdrop-blur rounded-xl px-6 py-4 shadow-sm">
+                    <p className="text-gray-700 text-lg font-medium">
+                      No companies available at the moment.
+                    </p>
+                    <p className="text-gray-500 text-sm">
+                      Please check back soon.
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
@@ -328,6 +397,7 @@ export const CompanyListings = () => {
                     company={company}
                     rank={index + 10}
                     isTopRanked={false}
+                    onClick={() => setSelectedCompany(company)}
                   />
                 ))}
               </div>
@@ -365,6 +435,145 @@ export const CompanyListings = () => {
           </div>
         </div>
       </div>
+
+      {/* Company Detail Modal */}
+      {selectedCompany && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedCompany(null);
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Details for ${selectedCompany.name}`}
+        >
+          <div className="relative w-full max-w-4xl bg-white md:rounded-2xl rounded-lg shadow-2xl overflow-hidden max-h-[85vh]">
+            <button
+              aria-label="Close"
+              className="absolute top-3 right-3 inline-flex items-center justify-center w-9 h-9 rounded-full bg-white/90 hover:bg-white shadow-md text-gray-700 hover:text-gray-900 transition"
+              onClick={() => setSelectedCompany(null)}
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-6 text-white">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                  <h3 className="text-2xl md:text-3xl font-bold tracking-tight">
+                    {selectedCompany.name}
+                  </h3>
+                  <div className="flex items-center gap-2 text-blue-100 mt-2">
+                    <MapPin className="w-4 h-4" />
+                    <span>
+                      {selectedCompany.city}, {selectedCompany.state}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full">
+                    <Star className="w-5 h-5 text-yellow-300" />
+                    <span className="font-semibold text-white">
+                      {selectedCompany.rating.toFixed(1)}
+                    </span>
+                  </div>
+                  <span className="text-sm text-blue-100">
+                    {selectedCompany.review_count} reviews
+                  </span>
+                </div>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <span className="px-3 py-1 text-xs font-medium rounded-full bg-white/15 backdrop-blur">
+                  <span className="inline-flex items-center gap-1">
+                    <Shield className="w-3.5 h-3.5" /> Verified
+                  </span>
+                </span>
+                <span className="px-3 py-1 text-xs font-medium rounded-full bg-white/15 backdrop-blur">
+                  <span className="inline-flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5" /> 24/7 Support
+                  </span>
+                </span>
+                <span className="px-3 py-1 text-xs font-medium rounded-full bg-white/15 backdrop-blur">
+                  <span className="inline-flex items-center gap-1">
+                    <ThumbsUp className="w-3.5 h-3.5" /> Trusted
+                  </span>
+                </span>
+              </div>
+            </div>
+
+            <div className="p-6 overflow-y-auto max-h-[calc(85vh-140px)]">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="md:col-span-2 space-y-6">
+                  <div>
+                    <h4 className="font-semibold text-gray-800 mb-2">About</h4>
+                    <p className="text-gray-600 leading-relaxed">
+                      {selectedCompany.description ||
+                        "Reliable movers offering comprehensive relocation services with professional care."}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <h5 className="text-sm font-semibold text-gray-700 mb-1">
+                        Address
+                      </h5>
+                      <p className="text-gray-600 text-sm break-words">
+                        {selectedCompany.address || "N/A"}
+                      </p>
+                    </div>
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <h5 className="text-sm font-semibold text-gray-700 mb-1">
+                        Contact
+                      </h5>
+                      <p className="text-gray-600 text-sm break-words">
+                        {selectedCompany.email}
+                      </p>
+                      <p className="text-gray-600 text-sm break-words">
+                        {selectedCompany.phone}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="p-4 bg-blue-50 rounded-lg">
+                    <h5 className="text-sm font-semibold text-blue-700 mb-2">
+                      Quick Actions
+                    </h5>
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        className="w-full h-12 bg-blue-600 hover:bg-blue-700 whitespace-normal break-words"
+                        onClick={() =>
+                          (window.location.href = `tel:${selectedCompany.phone}`)
+                        }
+                      >
+                        <Phone className="w-4 h-4 mr-2" /> Call{" "}
+                        {selectedCompany.name}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="w-full h-12 whitespace-normal break-words"
+                        onClick={() =>
+                          (window.location.href = `mailto:${selectedCompany.email}`)
+                        }
+                      >
+                        <Mail className="w-4 h-4 mr-2" /> Email{" "}
+                        {selectedCompany.name}
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <Button
+                      variant="secondary"
+                      onClick={() => setSelectedCompany(null)}
+                    >
+                      Close
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,21 +1,28 @@
-
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Search, MapPin, Calendar, Truck, Star, Shield, Clock } from 'lucide-react';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Search,
+  MapPin,
+  Calendar,
+  Truck,
+  Star,
+  Shield,
+  Clock,
+} from "lucide-react";
 
 export const HeroSection = () => {
-  const [fromLocation, setFromLocation] = useState('');
-  const [toLocation, setToLocation] = useState('');
+  const [fromLocation, setFromLocation] = useState("");
+  const [toLocation, setToLocation] = useState("");
 
   const handleSearch = () => {
-    if (fromLocation && toLocation) {
-      window.location.href = `/quote?from=${encodeURIComponent(fromLocation)}&to=${encodeURIComponent(toLocation)}`;
-    }
+    window.location.href = `/quote?from=${encodeURIComponent(
+      fromLocation
+    )}&to=${encodeURIComponent(toLocation)}`;
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleSearch();
     }
   };
@@ -44,14 +51,16 @@ export const HeroSection = () => {
             <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
               Professional Moving Made
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600 animate-pulse">
-                {' '}Easy
+                {" "}
+                Easy
               </span>
             </h1>
             <div className="w-24 h-1 bg-gradient-to-r from-orange-400 to-orange-600 mx-auto mb-6"></div>
           </div>
 
           <p className="text-xl md:text-2xl mb-12 text-blue-100 max-w-3xl mx-auto leading-relaxed">
-            Connect with trusted movers and packers nationwide. Get instant quotes, compare services, and book your perfect move today.
+            Connect with trusted movers and packers nationwide. Get instant
+            quotes, compare services, and book your perfect move today.
           </p>
 
           {/* Enhanced Search Form */}
@@ -85,7 +94,9 @@ export const HeroSection = () => {
                 Find Movers
               </Button>
             </div>
-            <p className="text-gray-600 text-sm mt-4">Press Enter to search • Free quotes • No obligations</p>
+            <p className="text-gray-600 text-sm mt-4">
+              Press Enter to search • Free quotes • No obligations
+            </p>
           </div>
 
           {/* Trust Indicators */}
@@ -125,17 +136,24 @@ export const HeroSection = () => {
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 hover:bg-white/20 transition-all duration-300">
               <Shield className="w-12 h-12 text-orange-400 mb-4 mx-auto" />
               <h3 className="text-xl font-semibold mb-2">Licensed & Insured</h3>
-              <p className="text-blue-100">All our movers are fully licensed and insured for your peace of mind</p>
+              <p className="text-blue-100">
+                All our movers are fully licensed and insured for your peace of
+                mind
+              </p>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 hover:bg-white/20 transition-all duration-300">
               <Clock className="w-12 h-12 text-orange-400 mb-4 mx-auto" />
               <h3 className="text-xl font-semibold mb-2">Instant Quotes</h3>
-              <p className="text-blue-100">Get multiple quotes instantly and compare prices from top movers</p>
+              <p className="text-blue-100">
+                Get multiple quotes instantly and compare prices from top movers
+              </p>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 hover:bg-white/20 transition-all duration-300">
               <Star className="w-12 h-12 text-orange-400 mb-4 mx-auto" />
               <h3 className="text-xl font-semibold mb-2">Best Rated</h3>
-              <p className="text-blue-100">Only the highest-rated movers make it to our platform</p>
+              <p className="text-blue-100">
+                Only the highest-rated movers make it to our platform
+              </p>
             </div>
           </div>
         </div>

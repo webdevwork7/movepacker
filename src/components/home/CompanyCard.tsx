@@ -15,18 +15,22 @@ interface CompanyCardProps {
   company: Company;
   rank?: number;
   isTopRanked?: boolean;
+  onClick?: () => void;
 }
 
 export const CompanyCard = ({
   company,
   rank,
   isTopRanked,
+  onClick,
 }: CompanyCardProps) => {
-  const handleCall = () => {
+  const handleCall = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     window.location.href = `tel:${company.phone}`;
   };
 
-  const handleEmail = () => {
+  const handleEmail = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     window.location.href = `mailto:${company.email}`;
   };
 
@@ -45,11 +49,14 @@ export const CompanyCard = ({
 
   return (
     <Card
+      onClick={onClick}
       className={`h-full transition-all duration-300 hover:shadow-xl ${
         isTopRanked
           ? "border-2 border-orange-400 shadow-lg"
           : "border border-gray-200"
-      }`}
+      } ${onClick ? "cursor-pointer hover:-translate-y-1" : ""}`}
+      role={onClick ? "button" : undefined}
+      aria-label={onClick ? `View details for ${company.name}` : undefined}
     >
       <CardContent className="p-6">
         <div className="flex flex-col h-full">
@@ -97,13 +104,17 @@ export const CompanyCard = ({
 
           <div className="flex flex-col sm:flex-row gap-2 mt-auto">
             <Button
-              onClick={handleCall}
+              onClick={(e) => handleCall(e)}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
             >
               <Phone className="w-4 h-4 mr-2" />
               Call Now
             </Button>
-            <Button onClick={handleEmail} variant="outline" className="flex-1">
+            <Button
+              onClick={(e) => handleEmail(e)}
+              variant="outline"
+              className="flex-1"
+            >
               <Mail className="w-4 h-4 mr-2" />
               Email
             </Button>
