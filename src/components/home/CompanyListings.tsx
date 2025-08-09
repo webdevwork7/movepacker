@@ -34,6 +34,7 @@ export const CompanyListings = () => {
   const [silverPlanId, setSilverPlanId] = useState<string | null>(null); // Added
   const [loading, setLoading] = useState(true);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const [visibleCount, setVisibleCount] = useState<number>(10);
 
   useEffect(() => {
     fetchPlansAndCompanies();
@@ -48,6 +49,11 @@ export const CompanyListings = () => {
     }
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [selectedCompany]);
+
+  // Reset visible count when company list updates
+  useEffect(() => {
+    setVisibleCount(10);
+  }, [companies]);
 
   const fetchPlansAndCompanies = async () => {
     setLoading(true);
@@ -183,7 +189,7 @@ export const CompanyListings = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {companies.length > 0 ? (
               companies
-                .slice(0, 10)
+                .slice(0, visibleCount)
                 .map((company, index) => (
                   <CompanyCard
                     key={company.id}
@@ -206,6 +212,21 @@ export const CompanyListings = () => {
               </div>
             )}
           </div>
+
+          {companies.length > visibleCount && (
+            <div className="mt-10 flex justify-center">
+              <Button
+                onClick={() =>
+                  setVisibleCount((prev) =>
+                    Math.min(prev + 10, companies.length)
+                  )
+                }
+                className="px-8"
+              >
+                Load more
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Top Ranked Section */}
