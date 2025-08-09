@@ -5,6 +5,7 @@ import { Phone, Mail, Menu, X, User } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useSettings } from "@/hooks/useSettings";
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -12,6 +13,7 @@ export const Header = () => {
   const [companyProfile, setCompanyProfile] = useState<{ name: string } | null>(
     null
   );
+  const { settings } = useSettings();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -50,11 +52,11 @@ export const Header = () => {
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-1">
               <Phone className="w-4 h-4" />
-              <span>{siteConfig.supportPhone}</span>
+              <span>{settings.support_phone || siteConfig.supportPhone}</span>
             </div>
             <div className="flex items-center space-x-1">
               <Mail className="w-4 h-4" />
-              <span>{siteConfig.supportEmail}</span>
+              <span>{settings.support_email || siteConfig.supportEmail}</span>
             </div>
           </div>
           <div className="hidden md:block">
@@ -74,7 +76,7 @@ export const Header = () => {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-800">
-                {siteConfig.name}
+                {settings.brand_name || siteConfig.name}
               </h1>
               <p className="text-sm text-gray-600">
                 Professional Movers & Packers

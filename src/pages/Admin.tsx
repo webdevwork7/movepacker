@@ -67,6 +67,7 @@ export const Admin = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [settings, setSettings] = useState<AdminSettings>({});
+  const [settingsForm, setSettingsForm] = useState<AdminSettings>({});
   const [activeTab, setActiveTab] = useState("dashboard");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState("created_at");
@@ -217,7 +218,9 @@ export const Admin = () => {
     setCompanyForm(company);
   };
 
-  const handleCompanyFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCompanyFormChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     // Store raw value; parse on save to preserve decimals while typing
     setCompanyForm((prev) => ({ ...prev, [name]: value as unknown as never }));
@@ -424,6 +427,7 @@ export const Admin = () => {
         settingsObj[setting.key as keyof AdminSettings] = setting.value;
       });
       setSettings(settingsObj);
+      setSettingsForm(settingsObj);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -768,6 +772,42 @@ export const Admin = () => {
       </div>
     </div>
   );
+
+  const handleSettingsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setSettingsForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveSettings = async () => {
+    try {
+      const entries: { key: string; value: string }[] = [];
+      const keys: (keyof AdminSettings)[] = [
+        "upi_id",
+        "brand_name",
+        "support_email",
+        "support_phone",
+      ];
+      keys.forEach((k) => {
+        const v = settingsForm[k];
+        if (typeof v === "string") {
+          entries.push({ key: String(k), value: v });
+        }
+      });
+
+      for (const row of entries) {
+        await supabase.from("settings").upsert(row, { onConflict: "key" });
+      }
+
+      setSettings(settingsForm);
+      toast({ title: "Settings updated" });
+    } catch (error: unknown) {
+      let message = "Failed to update settings";
+      if (error && typeof error === "object" && "message" in error) {
+        message = (error as { message: string }).message;
+      }
+      toast({ title: "Error", description: message, variant: "destructive" });
+    }
+  };
 
   if (!user || !isAdmin) {
     return null; // Will be redirected by useEffect
@@ -1325,32 +1365,43 @@ export const Admin = () => {
                   <div>
                     <label className="text-sm font-medium">UPI ID</label>
                     <Input
-                      value={settings.upi_id || ""}
+                      name="upi_id"
+                      value={settingsForm.upi_id || ""}
+                      onChange={handleSettingsChange}
                       placeholder="Enter UPI ID"
                     />
                   </div>
                   <div>
                     <label className="text-sm font-medium">Brand Name</label>
                     <Input
-                      value={settings.brand_name || ""}
+                      name="brand_name"
+                      value={settingsForm.brand_name || ""}
+                      onChange={handleSettingsChange}
                       placeholder="Enter brand name"
                     />
                   </div>
                   <div>
                     <label className="text-sm font-medium">Support Email</label>
                     <Input
-                      value={settings.support_email || ""}
+                      name="support_email"
+                      value={settingsForm.support_email || ""}
+                      onChange={handleSettingsChange}
                       placeholder="Enter support email"
                     />
                   </div>
                   <div>
                     <label className="text-sm font-medium">Support Phone</label>
                     <Input
-                      value={settings.support_phone || ""}
+                      name="support_phone"
+                      value={settingsForm.support_phone || ""}
+                      onChange={handleSettingsChange}
                       placeholder="Enter support phone"
                     />
                   </div>
-                  <Button className="bg-blue-600 hover:bg-blue-700">
+                  <Button
+                    className="bg-blue-600 hover:bg-blue-700"
+                    onClick={handleSaveSettings}
+                  >
                     Update Settings
                   </Button>
                 </div>
@@ -1552,6 +1603,16 @@ export const Admin = () => {
                   value={companyForm.review_count?.toString() || ""}
                   onChange={handleCompanyFormChange}
                   placeholder="Review Count"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <Label htmlFor="edit_company_description">Description</Label>
+                <Textarea
+                  id="edit_company_description"
+                  name="description"
+                  value={companyForm.description || ""}
+                  onChange={handleCompanyFormChange}
+                  placeholder="Company description"
                 />
               </div>
             </div>

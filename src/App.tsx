@@ -11,6 +11,9 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { CompanyDashboard } from "@/pages/CompanyDashboard";
 import { CompanyPlans } from "@/pages/CompanyPlans";
+import { Helmet } from "react-helmet-async";
+import { useSettings } from "@/hooks/useSettings";
+import { siteConfig } from "@/config/site";
 
 const ScrollToTop = () => {
   useScrollToTop();
@@ -18,10 +21,19 @@ const ScrollToTop = () => {
 };
 
 export const App = () => {
+  const { settings } = useSettings();
+  const brand = settings.brand_name || siteConfig.name;
+  const description = siteConfig.description;
+  const title = `${brand} – Find Your Perfect Mover & Packer Partner`;
+
   return (
     <Router>
       <AuthProvider>
         <ScrollToTop />
+        <Helmet>
+          <title>{title}</title>
+          <meta name="description" content={description} />
+        </Helmet>
         <div className="flex flex-col min-h-screen">
           <Header />
           <main className="flex-grow">
