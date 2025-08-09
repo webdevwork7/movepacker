@@ -56,6 +56,8 @@ import {
 } from "@/components/ui/pagination";
 import { format, parseISO } from "date-fns";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 type DataType = "companies" | "leads" | "bids";
 type SortOrder = "asc" | "desc";
@@ -79,6 +81,22 @@ export const Admin = () => {
   // State for editing companies (fix ReferenceError)
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [companyForm, setCompanyForm] = useState<Partial<Company>>({});
+
+  // New company state
+  const [isAddingCompanyOpen, setIsAddingCompanyOpen] = useState(false);
+  const [newCompanyForm, setNewCompanyForm] = useState<Partial<Company>>({
+    name: "",
+    phone: "",
+    email: "",
+    address: "",
+    city: "",
+    state: "",
+    description: "",
+    rating: 0,
+    review_count: 0,
+    is_active: false,
+    plan_id: undefined,
+  });
 
   // Plan mapping based on the provided plan data
   const planMapping: { [key: string]: string } = {
@@ -201,32 +219,20 @@ export const Admin = () => {
 
   const handleCompanyFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    // Handle numeric fields safely
-    if (name === "rating") {
-      const parsed =
-        value === "" ? ("" as unknown as number) : parseFloat(value);
-      setCompanyForm((prev) => ({ ...prev, rating: parsed }));
-      return;
-    }
-    if (name === "review_count") {
-      const parsed =
-        value === "" ? ("" as unknown as number) : parseInt(value, 10);
-      setCompanyForm((prev) => ({ ...prev, review_count: parsed }));
-      return;
-    }
-    setCompanyForm((prev) => ({ ...prev, [name]: value }));
+    // Store raw value; parse on save to preserve decimals while typing
+    setCompanyForm((prev) => ({ ...prev, [name]: value as unknown as never }));
   };
 
   const handleSaveEditCompany = async () => {
     if (!editingCompany) return;
     try {
       const updatePayload: Partial<Company> = {
-        name: companyForm.name,
-        phone: companyForm.phone,
-        email: companyForm.email,
-        address: companyForm.address,
-        city: companyForm.city,
-        state: companyForm.state,
+        name: companyForm.name as string | undefined,
+        phone: companyForm.phone as string | undefined,
+        email: companyForm.email as string | undefined,
+        address: companyForm.address as string | undefined,
+        city: companyForm.city as string | undefined,
+        state: companyForm.state as string | undefined,
         rating:
           typeof companyForm.rating === "number"
             ? companyForm.rating
@@ -238,7 +244,7 @@ export const Admin = () => {
                 String(companyForm.review_count ?? editingCompany.review_count),
                 10
               ),
-        description: companyForm.description,
+        description: companyForm.description as string | undefined,
       };
 
       const { error } = await supabase
@@ -278,6 +284,91 @@ export const Admin = () => {
       fetchData();
     } catch (error: unknown) {
       let message = "Failed to deactivate company";
+      if (error && typeof error === "object" && "message" in error) {
+        message = (error as { message: string }).message;
+      }
+      toast({ title: "Error", description: message, variant: "destructive" });
+    }
+  };
+
+  const handleNewCompanyChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    // Store raw value; parse on save to preserve decimals while typing
+    setNewCompanyForm((prev) => ({
+      ...prev,
+      [name]: value as unknown as never,
+    }));
+  };
+
+  const handleNewCompanyPlanChange = (value: string) => {
+    setNewCompanyForm((prev) => ({
+      ...prev,
+      plan_id: value === "none" ? undefined : value,
+    }));
+  };
+
+  const handleNewCompanyActiveToggle = (checked: boolean) => {
+    setNewCompanyForm((prev) => ({ ...prev, is_active: checked }));
+  };
+
+  const handleSaveNewCompany = async () => {
+    try {
+      type CompanyInsert = {
+        name: string;
+        phone: string;
+        email: string;
+        address?: string;
+        city?: string;
+        state?: string;
+        description?: string;
+        rating?: number;
+        review_count?: number;
+        is_active?: boolean;
+        plan_id?: string;
+      };
+      const payload: CompanyInsert = {
+        name: (newCompanyForm.name as string) || "",
+        phone: (newCompanyForm.phone as string) || "",
+        email: (newCompanyForm.email as string) || "",
+        address: (newCompanyForm.address as string) || undefined,
+        city: (newCompanyForm.city as string) || undefined,
+        state: (newCompanyForm.state as string) || undefined,
+        description: (newCompanyForm.description as string) || undefined,
+        rating:
+          typeof newCompanyForm.rating === "number"
+            ? newCompanyForm.rating
+            : parseFloat(String(newCompanyForm.rating || 0)),
+        review_count:
+          typeof newCompanyForm.review_count === "number"
+            ? newCompanyForm.review_count
+            : parseInt(String(newCompanyForm.review_count || 0), 10),
+        is_active: Boolean(newCompanyForm.is_active),
+        plan_id: newCompanyForm.plan_id as string | undefined,
+      };
+
+      const { error } = await supabase.from("companies").insert(payload);
+      if (error) throw error;
+
+      toast({ title: "Company added" });
+      setIsAddingCompanyOpen(false);
+      setNewCompanyForm({
+        name: "",
+        phone: "",
+        email: "",
+        address: "",
+        city: "",
+        state: "",
+        description: "",
+        rating: 0,
+        review_count: 0,
+        is_active: false,
+        plan_id: undefined,
+      });
+      fetchData();
+    } catch (error: unknown) {
+      let message = "Failed to add company";
       if (error && typeof error === "object" && "message" in error) {
         message = (error as { message: string }).message;
       }
@@ -1001,7 +1092,15 @@ export const Admin = () => {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Companies Management</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Companies Management</CardTitle>
+                  <Button
+                    className="bg-blue-600 hover:bg-blue-700"
+                    onClick={() => setIsAddingCompanyOpen(true)}
+                  >
+                    Add Company
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 {renderTableControls()}
@@ -1272,49 +1371,77 @@ export const Admin = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-lg font-bold mb-4">Edit Lead</h2>
-            <div className="space-y-2">
-              <Input
-                name="name"
-                value={editForm.name || ""}
-                onChange={handleEditFormChange}
-                placeholder="Name"
-              />
-              <Input
-                name="email"
-                value={editForm.email || ""}
-                onChange={handleEditFormChange}
-                placeholder="Email"
-              />
-              <Input
-                name="phone"
-                value={editForm.phone || ""}
-                onChange={handleEditFormChange}
-                placeholder="Phone"
-              />
-              <Input
-                name="from_location"
-                value={editForm.from_location || ""}
-                onChange={handleEditFormChange}
-                placeholder="From Location"
-              />
-              <Input
-                name="to_location"
-                value={editForm.to_location || ""}
-                onChange={handleEditFormChange}
-                placeholder="To Location"
-              />
-              <Input
-                name="moving_date"
-                value={editForm.moving_date || ""}
-                onChange={handleEditFormChange}
-                placeholder="Moving Date"
-              />
-              <Input
-                name="message"
-                value={editForm.message || ""}
-                onChange={handleEditFormChange}
-                placeholder="Message"
-              />
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="edit_lead_name">Name</Label>
+                <Input
+                  id="edit_lead_name"
+                  name="name"
+                  value={editForm.name || ""}
+                  onChange={handleEditFormChange}
+                  placeholder="Name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit_lead_email">Email</Label>
+                <Input
+                  id="edit_lead_email"
+                  name="email"
+                  value={editForm.email || ""}
+                  onChange={handleEditFormChange}
+                  placeholder="Email"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit_lead_phone">Phone</Label>
+                <Input
+                  id="edit_lead_phone"
+                  name="phone"
+                  value={editForm.phone || ""}
+                  onChange={handleEditFormChange}
+                  placeholder="Phone"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit_lead_from">From Location</Label>
+                <Input
+                  id="edit_lead_from"
+                  name="from_location"
+                  value={editForm.from_location || ""}
+                  onChange={handleEditFormChange}
+                  placeholder="From Location"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit_lead_to">To Location</Label>
+                <Input
+                  id="edit_lead_to"
+                  name="to_location"
+                  value={editForm.to_location || ""}
+                  onChange={handleEditFormChange}
+                  placeholder="To Location"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit_lead_date">Moving Date</Label>
+                <Input
+                  id="edit_lead_date"
+                  name="moving_date"
+                  value={editForm.moving_date || ""}
+                  onChange={handleEditFormChange}
+                  placeholder="Moving Date"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit_lead_message">Message</Label>
+                <Input
+                  id="edit_lead_message"
+                  name="message"
+                  value={editForm.message || ""}
+                  onChange={handleEditFormChange}
+                  placeholder="Message"
+                />
+              </div>
             </div>
             <div className="flex gap-2 mt-4">
               <Button
@@ -1343,54 +1470,90 @@ export const Admin = () => {
           >
             <h2 className="text-lg font-bold mb-4">Edit Company</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <Input
-                name="name"
-                value={companyForm.name || ""}
-                onChange={handleCompanyFormChange}
-                placeholder="Name"
-              />
-              <Input
-                name="phone"
-                value={companyForm.phone || ""}
-                onChange={handleCompanyFormChange}
-                placeholder="Phone"
-              />
-              <Input
-                name="email"
-                value={companyForm.email || ""}
-                onChange={handleCompanyFormChange}
-                placeholder="Email"
-              />
-              <Input
-                name="address"
-                value={companyForm.address || ""}
-                onChange={handleCompanyFormChange}
-                placeholder="Address"
-              />
-              <Input
-                name="city"
-                value={companyForm.city || ""}
-                onChange={handleCompanyFormChange}
-                placeholder="City"
-              />
-              <Input
-                name="state"
-                value={companyForm.state || ""}
-                onChange={handleCompanyFormChange}
-                placeholder="State"
-              />
-              <Input
-                name="rating"
-                value={companyForm.rating?.toString() || ""}
-                onChange={handleCompanyFormChange}
-                placeholder="Rating (0-5)"
-              />
-              <Input
-                name="review_count"
-                value={companyForm.review_count?.toString() || ""}
-                onChange={handleCompanyFormChange}
-                placeholder="Review Count"
-              />
+              <div>
+                <Label htmlFor="edit_company_name">Name</Label>
+                <Input
+                  id="edit_company_name"
+                  name="name"
+                  value={companyForm.name || ""}
+                  onChange={handleCompanyFormChange}
+                  placeholder="Name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit_company_phone">Phone</Label>
+                <Input
+                  id="edit_company_phone"
+                  name="phone"
+                  value={companyForm.phone || ""}
+                  onChange={handleCompanyFormChange}
+                  placeholder="Phone"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit_company_email">Email</Label>
+                <Input
+                  id="edit_company_email"
+                  name="email"
+                  value={companyForm.email || ""}
+                  onChange={handleCompanyFormChange}
+                  placeholder="Email"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit_company_address">Address</Label>
+                <Input
+                  id="edit_company_address"
+                  name="address"
+                  value={companyForm.address || ""}
+                  onChange={handleCompanyFormChange}
+                  placeholder="Address"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit_company_city">City</Label>
+                <Input
+                  id="edit_company_city"
+                  name="city"
+                  value={companyForm.city || ""}
+                  onChange={handleCompanyFormChange}
+                  placeholder="City"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit_company_state">State</Label>
+                <Input
+                  id="edit_company_state"
+                  name="state"
+                  value={companyForm.state || ""}
+                  onChange={handleCompanyFormChange}
+                  placeholder="State"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit_company_rating">Rating (0-5)</Label>
+                <Input
+                  id="edit_company_rating"
+                  name="rating"
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="5"
+                  value={companyForm.rating?.toString() || ""}
+                  onChange={handleCompanyFormChange}
+                  placeholder="Rating (0-5)"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit_company_reviews">Review Count</Label>
+                <Input
+                  id="edit_company_reviews"
+                  name="review_count"
+                  value={companyForm.review_count?.toString() || ""}
+                  onChange={handleCompanyFormChange}
+                  placeholder="Review Count"
+                />
+              </div>
             </div>
             <div className="flex gap-2 mt-4 justify-end">
               <Button
@@ -1423,50 +1586,78 @@ export const Admin = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-lg font-bold mb-4">Add Lead</h2>
-            <div className="space-y-2">
-              <Input
-                name="name"
-                value={newLeadForm.name || ""}
-                onChange={handleNewLeadChange}
-                placeholder="Name"
-              />
-              <Input
-                name="email"
-                value={newLeadForm.email || ""}
-                onChange={handleNewLeadChange}
-                placeholder="Email"
-              />
-              <Input
-                name="phone"
-                value={newLeadForm.phone || ""}
-                onChange={handleNewLeadChange}
-                placeholder="Phone"
-              />
-              <Input
-                name="from_location"
-                value={newLeadForm.from_location || ""}
-                onChange={handleNewLeadChange}
-                placeholder="From Location"
-              />
-              <Input
-                name="to_location"
-                value={newLeadForm.to_location || ""}
-                onChange={handleNewLeadChange}
-                placeholder="To Location"
-              />
-              <Input
-                name="moving_date"
-                type="date"
-                value={newLeadForm.moving_date || ""}
-                onChange={handleNewLeadChange}
-                placeholder="Moving Date"
-              />
-              <Textarea
-                name="message"
-                value={newLeadForm.message || ""}
-                onChange={handleNewLeadChange}
-                placeholder="Message"
-              />
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="add_lead_name">Name</Label>
+                <Input
+                  id="add_lead_name"
+                  name="name"
+                  value={newLeadForm.name || ""}
+                  onChange={handleNewLeadChange}
+                  placeholder="Name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="add_lead_email">Email</Label>
+                <Input
+                  id="add_lead_email"
+                  name="email"
+                  value={newLeadForm.email || ""}
+                  onChange={handleNewLeadChange}
+                  placeholder="Email"
+                />
+              </div>
+              <div>
+                <Label htmlFor="add_lead_phone">Phone</Label>
+                <Input
+                  id="add_lead_phone"
+                  name="phone"
+                  value={newLeadForm.phone || ""}
+                  onChange={handleNewLeadChange}
+                  placeholder="Phone"
+                />
+              </div>
+              <div>
+                <Label htmlFor="add_lead_from">From Location</Label>
+                <Input
+                  id="add_lead_from"
+                  name="from_location"
+                  value={newLeadForm.from_location || ""}
+                  onChange={handleNewLeadChange}
+                  placeholder="From Location"
+                />
+              </div>
+              <div>
+                <Label htmlFor="add_lead_to">To Location</Label>
+                <Input
+                  id="add_lead_to"
+                  name="to_location"
+                  value={newLeadForm.to_location || ""}
+                  onChange={handleNewLeadChange}
+                  placeholder="To Location"
+                />
+              </div>
+              <div>
+                <Label htmlFor="add_lead_date">Moving Date</Label>
+                <Input
+                  id="add_lead_date"
+                  name="moving_date"
+                  type="date"
+                  value={newLeadForm.moving_date || ""}
+                  onChange={handleNewLeadChange}
+                  placeholder="Moving Date"
+                />
+              </div>
+              <div>
+                <Label htmlFor="add_lead_message">Message</Label>
+                <Textarea
+                  id="add_lead_message"
+                  name="message"
+                  value={newLeadForm.message || ""}
+                  onChange={handleNewLeadChange}
+                  placeholder="Message"
+                />
+              </div>
             </div>
             <div className="flex gap-2 mt-4 justify-end">
               <Button
@@ -1477,6 +1668,160 @@ export const Admin = () => {
               </Button>
               <Button
                 onClick={() => setIsAddingLeadOpen(false)}
+                variant="secondary"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Company Modal */}
+      {isAddingCompanyOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsAddingCompanyOpen(false);
+          }}
+        >
+          <div
+            className="bg-white p-6 rounded shadow-lg w-full max-w-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-bold mb-4">Add Company</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="add_company_name">Company Name</Label>
+                <Input
+                  id="add_company_name"
+                  name="name"
+                  value={newCompanyForm.name || ""}
+                  onChange={handleNewCompanyChange}
+                  placeholder="Company Name"
+                />
+              </div>
+              <div>
+                <Label htmlFor="add_company_phone">Phone</Label>
+                <Input
+                  id="add_company_phone"
+                  name="phone"
+                  value={newCompanyForm.phone || ""}
+                  onChange={handleNewCompanyChange}
+                  placeholder="Phone"
+                />
+              </div>
+              <div>
+                <Label htmlFor="add_company_email">Email</Label>
+                <Input
+                  id="add_company_email"
+                  name="email"
+                  value={newCompanyForm.email || ""}
+                  onChange={handleNewCompanyChange}
+                  placeholder="Email"
+                />
+              </div>
+              <div>
+                <Label htmlFor="add_company_address">Address</Label>
+                <Input
+                  id="add_company_address"
+                  name="address"
+                  value={newCompanyForm.address || ""}
+                  onChange={handleNewCompanyChange}
+                  placeholder="Address"
+                />
+              </div>
+              <div>
+                <Label htmlFor="add_company_city">City</Label>
+                <Input
+                  id="add_company_city"
+                  name="city"
+                  value={newCompanyForm.city || ""}
+                  onChange={handleNewCompanyChange}
+                  placeholder="City"
+                />
+              </div>
+              <div>
+                <Label htmlFor="add_company_state">State</Label>
+                <Input
+                  id="add_company_state"
+                  name="state"
+                  value={newCompanyForm.state || ""}
+                  onChange={handleNewCompanyChange}
+                  placeholder="State"
+                />
+              </div>
+              <div>
+                <Label htmlFor="add_company_rating">Rating (0-5)</Label>
+                <Input
+                  id="add_company_rating"
+                  name="rating"
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="5"
+                  value={newCompanyForm.rating?.toString() || ""}
+                  onChange={handleNewCompanyChange}
+                  placeholder="Rating (0-5)"
+                />
+              </div>
+              <div>
+                <Label htmlFor="add_company_reviews">Review Count</Label>
+                <Input
+                  id="add_company_reviews"
+                  name="review_count"
+                  value={newCompanyForm.review_count?.toString() || ""}
+                  onChange={handleNewCompanyChange}
+                  placeholder="Review Count"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <Label htmlFor="add_company_description">Description</Label>
+                <Textarea
+                  id="add_company_description"
+                  name="description"
+                  value={newCompanyForm.description || ""}
+                  onChange={handleNewCompanyChange}
+                  placeholder="Description"
+                />
+              </div>
+              <div className="flex items-center gap-3">
+                <Label htmlFor="is_active">Active</Label>
+                <Switch
+                  id="is_active"
+                  checked={Boolean(newCompanyForm.is_active)}
+                  onCheckedChange={handleNewCompanyActiveToggle}
+                />
+              </div>
+              <div>
+                <Label className="mb-1 block">Plan</Label>
+                <Select
+                  value={newCompanyForm.plan_id ?? "none"}
+                  onValueChange={handleNewCompanyPlanChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select plan" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No plan</SelectItem>
+                    {plans.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-4 justify-end">
+              <Button
+                onClick={handleSaveNewCompany}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                Save
+              </Button>
+              <Button
+                onClick={() => setIsAddingCompanyOpen(false)}
                 variant="secondary"
               >
                 Cancel
