@@ -54,7 +54,14 @@ export const Header = () => {
       <div className="bg-blue-600 text-white py-2">
         <div className="container mx-auto px-4 flex justify-between items-center text-sm">
           <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-1">
+            <div
+              onClick={() =>
+                (window.location.href = `tel:${
+                  settings.support_phone || siteConfig.supportPhone
+                }`)
+              }
+              className="flex items-center space-x-1 hover:text-blue-200 transition-colors cursor-pointer"
+            >
               <Phone className="w-4 h-4" />
               <span>
                 {maskPhoneNumber(

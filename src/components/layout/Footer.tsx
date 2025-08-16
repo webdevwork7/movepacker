@@ -94,7 +94,14 @@ export const Footer = () => {
           <div>
             <h4 className="text-lg font-semibold mb-4">Contact Info</h4>
             <div className="space-y-3">
-              <div className="flex items-center space-x-3">
+              <div
+                onClick={() =>
+                  (window.location.href = `tel:${
+                    settings.support_phone || siteConfig.supportPhone
+                  }`)
+                }
+                className="flex items-center space-x-3 hover:text-white transition-colors cursor-pointer"
+              >
                 <Phone className="w-5 h-5 text-blue-400" />
                 <span className="text-gray-400">
                   {maskPhoneNumber(
