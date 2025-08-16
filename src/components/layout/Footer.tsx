@@ -8,7 +8,7 @@ import {
   Instagram,
   Linkedin,
 } from "lucide-react";
-import { siteConfig } from "@/config/site";
+import { siteConfig, getDynamicSupportEmail } from "@/config/site";
 import { useSettings } from "@/hooks/useSettings";
 
 export const Footer = () => {
@@ -23,7 +23,9 @@ export const Footer = () => {
             <div className="flex items-center space-x-2 mb-4">
               <div className="bg-blue-600 p-2 rounded-lg">
                 <div className="w-8 h-8 flex items-center justify-center font-bold text-lg">
-                  M
+                  {(settings.brand_name || siteConfig.name)
+                    .charAt(0)
+                    .toUpperCase()}
                 </div>
               </div>
               <div>
@@ -97,7 +99,8 @@ export const Footer = () => {
               <div className="flex items-center space-x-3">
                 <Mail className="w-5 h-5 text-blue-400" />
                 <span className="text-gray-400">
-                  {settings.support_email || siteConfig.supportEmail}
+                  {settings.support_email ||
+                    getDynamicSupportEmail(settings.brand_name)}
                 </span>
               </div>
               <div className="flex items-center space-x-3">

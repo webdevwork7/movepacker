@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Phone, Mail, Menu, X, User } from "lucide-react";
-import { siteConfig } from "@/config/site";
+import { siteConfig, getDynamicSupportEmail } from "@/config/site";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/useSettings";
@@ -56,7 +56,10 @@ export const Header = () => {
             </div>
             <div className="flex items-center space-x-1">
               <Mail className="w-4 h-4" />
-              <span>{settings.support_email || siteConfig.supportEmail}</span>
+              <span>
+                {settings.support_email ||
+                  getDynamicSupportEmail(settings.brand_name)}
+              </span>
             </div>
           </div>
           <div className="hidden md:block">
@@ -71,7 +74,9 @@ export const Header = () => {
           <Link to="/" className="flex items-center space-x-2">
             <div className="bg-blue-600 text-white p-2 rounded-lg">
               <div className="w-8 h-8 flex items-center justify-center font-bold text-lg">
-                M
+                {(settings.brand_name || siteConfig.name)
+                  .charAt(0)
+                  .toUpperCase()}
               </div>
             </div>
             <div>

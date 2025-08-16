@@ -11,6 +11,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { CompanyDashboard } from "@/pages/CompanyDashboard";
 import { CompanyPlans } from "@/pages/CompanyPlans";
+import { LandingPPC } from "@/pages/LandingPPC";
 import { Helmet } from "react-helmet-async";
 import { useSettings } from "@/hooks/useSettings";
 import { siteConfig } from "@/config/site";
@@ -44,6 +45,7 @@ export const App = () => {
               <Route path="/company" element={<CompanyDashboard />} />
               <Route path="/company-plans" element={<CompanyPlans />} />
               <Route path="/quote" element={<Quote />} />
+              <Route path="/landing-ppc" element={<LandingPPC />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>

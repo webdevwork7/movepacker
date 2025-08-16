@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { siteConfig } from "@/config/site";
+import { siteConfig, getDynamicSupportEmail } from "@/config/site";
 import { useSettings } from "@/hooks/useSettings";
 import { ChevronDown, ChevronUp, HelpCircle } from "lucide-react";
 
@@ -137,7 +137,8 @@ export const FAQSection = () => {
               </a>
               <a
                 href={`mailto:${
-                  settings.support_email || siteConfig.supportEmail
+                  settings.support_email ||
+                  getDynamicSupportEmail(settings.brand_name)
                 }`}
                 className="inline-flex items-center justify-center px-6 py-3 border border-blue-600 text-blue-600 font-semibold rounded-xl hover:bg-blue-50 transition-colors"
               >
