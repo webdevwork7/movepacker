@@ -186,21 +186,125 @@ export const CompanyListings = () => {
             <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-indigo-600 mx-auto mt-4"></div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <div className="space-y-4 max-w-6xl mx-auto">
             {companies.length > 0 ? (
-              companies
-                .slice(0, visibleCount)
-                .map((company, index) => (
-                  <CompanyCard
-                    key={company.id}
-                    company={company}
-                    rank={index + 1}
-                    isTopRanked={false}
-                    onClick={() => setSelectedCompany(company)}
-                  />
-                ))
+              companies.slice(0, visibleCount).map((company, index) => (
+                <div
+                  key={company.id}
+                  className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 overflow-hidden cursor-pointer transform hover:scale-[1.02]"
+                  onClick={() => setSelectedCompany(company)}
+                >
+                  <div className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        {/* Rank Badge */}
+                        <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full text-white font-bold text-lg shadow-lg">
+                          #{index + 1}
+                        </div>
+
+                        {/* Company Info */}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-xl font-bold text-gray-800 hover:text-blue-600 transition-colors">
+                              {company.name}
+                            </h3>
+
+                            {/* Plan-based Badges */}
+                            <div className="flex items-center gap-2">
+                              <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full border border-green-200">
+                                ✓ Verified
+                              </span>
+                              <span className="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-full border border-indigo-200">
+                                🕒 24/7 Support
+                              </span>
+                              {company.plan_id === platinumPlanId && (
+                                <span className="px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-semibold rounded-full shadow-md">
+                                  💎 Elite Partner
+                                </span>
+                              )}
+                              {company.plan_id === goldPlanId && (
+                                <span className="px-3 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-semibold rounded-full shadow-md">
+                                  👑 Premium Pro
+                                </span>
+                              )}
+                              {company.plan_id === silverPlanId && (
+                                <span className="px-3 py-1 bg-gradient-to-r from-blue-400 to-cyan-500 text-white text-xs font-semibold rounded-full shadow-md">
+                                  ⭐ Trusted Choice
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Rating and Location */}
+                          <div className="flex items-center gap-4 text-sm text-gray-600">
+                            <div className="flex items-center gap-1">
+                              <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                              <span className="font-semibold text-gray-800">
+                                {company.rating.toFixed(1)}
+                              </span>
+                              <span>({company.review_count} reviews)</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <MapPin className="w-4 h-4 text-gray-400" />
+                              <span>
+                                {company.city}, {company.state}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Company Description */}
+                          <div className="mt-3">
+                            <p className="text-sm text-gray-600 leading-relaxed line-clamp-2">
+                              {company.description ||
+                                "Professional moving services with experienced team members dedicated to providing safe, reliable, and efficient relocation solutions for residential and commercial clients."}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Contact Actions */}
+                      <div className="flex flex-col gap-2 ml-6">
+                        <div className="text-right mb-2">
+                          <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
+                            <Phone className="w-4 h-4" />
+                            <span className="font-medium">{company.phone}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-sm text-gray-600">
+                            <Mail className="w-4 h-4" />
+                            <span className="text-xs">{company.email}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm font-medium"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.location.href = "/quote";
+                            }}
+                          >
+                            Get Quote
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-blue-200 text-blue-600 hover:bg-blue-50 px-4 py-2 text-sm font-medium"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.location.href = `tel:${company.phone}`;
+                            }}
+                          >
+                            Call Now
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
             ) : (
-              <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4 text-center py-12">
+              <div className="text-center py-12">
                 <div className="inline-block bg-white/70 backdrop-blur rounded-xl px-6 py-4 shadow-sm">
                   <p className="text-gray-700 text-lg font-medium">
                     No companies available at the moment.
@@ -229,7 +333,8 @@ export const CompanyListings = () => {
           )}
         </div>
 
-        {/* Top Ranked Section */}
+        {/* Top Ranked Section - 👑 Top Ranked Movers section commented out */}
+        {/*
         <div className="mb-20 relative">
           <div className="absolute inset-0 bg-gradient-to-r from-yellow-100 to-orange-100 opacity-50 rounded-3xl"></div>
           <div className="relative px-6 py-16 rounded-3xl">
@@ -256,7 +361,6 @@ export const CompanyListings = () => {
                       key={company.id}
                       className={`relative ${rankStyle?.wrapperClass} transition-all duration-300`}
                     >
-                      {/* Rank Badge */}
                       <div
                         className={`absolute -top-6 left-1/2 transform -translate-x-1/2 z-30 ${rankStyle?.containerClass} text-white px-6 py-2 rounded-full shadow-lg flex items-center gap-2 whitespace-nowrap`}
                       >
@@ -264,7 +368,6 @@ export const CompanyListings = () => {
                         <span className="font-bold">{rankStyle?.label}</span>
                       </div>
 
-                      {/* Ribbon */}
                       <div className="absolute -left-2 top-12 h-8">
                         <div
                           className={`${rankStyle?.ribbon} text-white px-4 py-1 shadow-md relative`}
@@ -273,7 +376,6 @@ export const CompanyListings = () => {
                         </div>
                       </div>
 
-                      {/* Card */}
                       <div className="relative">
                         <div className="absolute inset-0 bg-gradient-to-b from-white/50 to-transparent rounded-lg"></div>
                         <CompanyCard
@@ -301,8 +403,10 @@ export const CompanyListings = () => {
             </div>
           </div>
         </div>
+        */}
 
-        {/* Premium Movers Section */}
+        {/* Premium Movers Section - 💎 Premium Movers section commented out */}
+        {/*
         <div className="mb-20 relative">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-100 to-pink-100 opacity-50 rounded-3xl"></div>
           <div className="relative px-6 py-12 rounded-3xl">
@@ -346,8 +450,10 @@ export const CompanyListings = () => {
             </div>
           </div>
         </div>
+        */}
 
-        {/* Popular Companies Section */}
+        {/* Popular Companies Section - 🔥 Popular Movers section commented out */}
+        {/*
         <div className="mb-20 relative">
           <div className="absolute inset-0 bg-gradient-to-r from-red-100 to-orange-100 opacity-50 rounded-3xl"></div>
           <div className="relative px-6 py-12 rounded-3xl">
@@ -391,6 +497,7 @@ export const CompanyListings = () => {
             </div>
           </div>
         </div>
+        */}
 
         {/* Featured Companies Section */}
         {featuredCompanies.length > 0 && (
@@ -426,14 +533,13 @@ export const CompanyListings = () => {
           </div>
         )}
 
-        {/* Call to Action */}
+        {/* Call to Action - Ready to Make Your Move? section commented out */}
+        {/*
         <div className="text-center">
           <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 rounded-3xl p-16 shadow-2xl max-w-4xl mx-auto text-white transform hover:scale-105 transition-transform duration-300 relative overflow-hidden">
-            {/* Animated background elements */}
             <div className="absolute inset-0">
               <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white to-transparent opacity-10 transform -skew-x-12 animate-shimmer"></div>
             </div>
-            {/* Content */}
             <div className="relative z-10">
               <div className="inline-flex items-center justify-center w-24 h-24 bg-white bg-opacity-10 rounded-full mb-8 backdrop-blur-sm">
                 <TrendingUp className="w-12 h-12 text-white" />
@@ -455,6 +561,7 @@ export const CompanyListings = () => {
             </div>
           </div>
         </div>
+        */}
       </div>
 
       {/* Company Detail Modal */}
