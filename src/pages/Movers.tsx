@@ -415,49 +415,49 @@ export const Movers = () => {
                   className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 overflow-hidden cursor-pointer transform hover:scale-[1.02]"
                   onClick={() => setSelectedCompany(company)}
                 >
-                  <div className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
+                  <div className="p-4 md:p-6">
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                      <div className="flex items-start md:items-center space-x-3 md:space-x-4 flex-1">
                         {/* Rank Badge */}
-                        <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full text-white font-bold text-lg shadow-lg">
+                        <div className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full text-white font-bold text-sm md:text-lg shadow-lg flex-shrink-0">
                           #{index + 1}
                         </div>
 
                         {/* Company Info */}
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-xl font-bold text-gray-800 hover:text-blue-600 transition-colors">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                            <h3 className="text-lg md:text-xl font-bold text-gray-800 hover:text-blue-600 transition-colors truncate">
                               {company.name}
                             </h3>
 
                             {/* Plan-based Badges */}
-                            <div className="flex items-center gap-2">
-                              <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full border border-green-200">
+                            <div className="flex flex-wrap items-center gap-1 md:gap-2">
+                              <span className="px-2 md:px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full border border-green-200">
                                 ✓ Verified
                               </span>
-                              <span className="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-full border border-indigo-200">
-                                🕒 24/7 Support
+                              <span className="px-2 md:px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-full border border-indigo-200">
+                                🕒 24/7
                               </span>
                               {company.plan_id === platinumPlanId && (
-                                <span className="px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-semibold rounded-full shadow-md">
-                                  💎 Elite Partner
+                                <span className="px-2 md:px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-semibold rounded-full shadow-md">
+                                  💎 Elite
                                 </span>
                               )}
                               {company.plan_id === goldPlanId && (
-                                <span className="px-3 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-semibold rounded-full shadow-md">
-                                  👑 Premium Pro
+                                <span className="px-2 md:px-3 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-semibold rounded-full shadow-md">
+                                  👑 Premium
                                 </span>
                               )}
                               {company.plan_id === silverPlanId && (
-                                <span className="px-3 py-1 bg-gradient-to-r from-blue-400 to-cyan-500 text-white text-xs font-semibold rounded-full shadow-md">
-                                  ⭐ Trusted Choice
+                                <span className="px-2 md:px-3 py-1 bg-gradient-to-r from-blue-400 to-cyan-500 text-white text-xs font-semibold rounded-full shadow-md">
+                                  ⭐ Trusted
                                 </span>
                               )}
                             </div>
                           </div>
 
                           {/* Rating and Location */}
-                          <div className="flex items-center gap-4 text-sm text-gray-600">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600 mb-3">
                             <div className="flex items-center gap-1">
                               <Star className="w-4 h-4 text-yellow-400 fill-current" />
                               <span className="font-semibold text-gray-800">
@@ -467,14 +467,14 @@ export const Movers = () => {
                             </div>
                             <div className="flex items-center gap-1">
                               <MapPin className="w-4 h-4 text-gray-400" />
-                              <span>
+                              <span className="truncate">
                                 {company.city}, {company.state}
                               </span>
                             </div>
                           </div>
 
                           {/* Company Description */}
-                          <div className="mt-3">
+                          <div className="hidden md:block">
                             <p className="text-sm text-gray-600 leading-relaxed line-clamp-2">
                               {company.description ||
                                 "Professional moving services with experienced team members dedicated to providing safe, reliable, and efficient relocation solutions for residential and commercial clients."}
@@ -484,22 +484,26 @@ export const Movers = () => {
                       </div>
 
                       {/* Contact Actions */}
-                      <div className="flex flex-col gap-2 ml-6">
-                        <div className="text-right mb-2">
-                          <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
+                      <div className="flex flex-col gap-3 lg:ml-6 lg:flex-shrink-0">
+                        <div className="flex flex-col sm:flex-row lg:flex-col gap-2 lg:text-right">
+                          <div className="flex items-center gap-1 text-sm text-gray-600">
                             <Phone className="w-4 h-4" />
-                            <span className="font-medium">{company.phone}</span>
+                            <span className="font-medium truncate">
+                              {company.phone}
+                            </span>
                           </div>
                           <div className="flex items-center gap-1 text-sm text-gray-600">
                             <Mail className="w-4 h-4" />
-                            <span className="text-xs">{company.email}</span>
+                            <span className="text-xs truncate">
+                              {company.email}
+                            </span>
                           </div>
                         </div>
 
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                           <Button
                             size="sm"
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm font-medium"
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 md:px-4 py-2 text-sm font-medium flex-1 sm:flex-none"
                             onClick={(e) => {
                               e.stopPropagation();
                               window.location.href = "/quote";
@@ -510,7 +514,7 @@ export const Movers = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="border-blue-200 text-blue-600 hover:bg-blue-50 px-4 py-2 text-sm font-medium"
+                            className="border-blue-200 text-blue-600 hover:bg-blue-50 px-3 md:px-4 py-2 text-sm font-medium flex-1 sm:flex-none"
                             onClick={(e) => {
                               e.stopPropagation();
                               window.location.href = `tel:${company.phone}`;
@@ -567,49 +571,49 @@ export const Movers = () => {
                   className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 overflow-hidden cursor-pointer transform hover:scale-[1.02]"
                   onClick={() => setSelectedCompany(company)}
                 >
-                  <div className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
+                  <div className="p-4 md:p-6">
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                      <div className="flex items-start md:items-center space-x-3 md:space-x-4 flex-1">
                         {/* Rank Badge */}
-                        <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full text-white font-bold text-lg shadow-lg">
+                        <div className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full text-white font-bold text-sm md:text-lg shadow-lg flex-shrink-0">
                           #{startIndex + index + 1}
                         </div>
 
                         {/* Company Info */}
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-xl font-bold text-gray-800 hover:text-blue-600 transition-colors">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                            <h3 className="text-lg md:text-xl font-bold text-gray-800 hover:text-blue-600 transition-colors truncate">
                               {company.name}
                             </h3>
 
                             {/* Plan-based Badges */}
-                            <div className="flex items-center gap-2">
-                              <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full border border-green-200">
+                            <div className="flex flex-wrap items-center gap-1 md:gap-2">
+                              <span className="px-2 md:px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full border border-green-200">
                                 ✓ Verified
                               </span>
-                              <span className="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-full border border-indigo-200">
-                                🕒 24/7 Support
+                              <span className="px-2 md:px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-full border border-indigo-200">
+                                🕒 24/7
                               </span>
                               {company.plan_id === platinumPlanId && (
-                                <span className="px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-semibold rounded-full shadow-md">
-                                  💎 Elite Partner
+                                <span className="px-2 md:px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-semibold rounded-full shadow-md">
+                                  💎 Elite
                                 </span>
                               )}
                               {company.plan_id === goldPlanId && (
-                                <span className="px-3 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-semibold rounded-full shadow-md">
-                                  👑 Premium Pro
+                                <span className="px-2 md:px-3 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-semibold rounded-full shadow-md">
+                                  👑 Premium
                                 </span>
                               )}
                               {company.plan_id === silverPlanId && (
-                                <span className="px-3 py-1 bg-gradient-to-r from-blue-400 to-cyan-500 text-white text-xs font-semibold rounded-full shadow-md">
-                                  ⭐ Trusted Choice
+                                <span className="px-2 md:px-3 py-1 bg-gradient-to-r from-blue-400 to-cyan-500 text-white text-xs font-semibold rounded-full shadow-md">
+                                  ⭐ Trusted
                                 </span>
                               )}
                             </div>
                           </div>
 
                           {/* Rating and Location */}
-                          <div className="flex items-center gap-4 text-sm text-gray-600">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600 mb-3">
                             <div className="flex items-center gap-1">
                               <Star className="w-4 h-4 text-yellow-400 fill-current" />
                               <span className="font-semibold text-gray-800">
@@ -619,14 +623,14 @@ export const Movers = () => {
                             </div>
                             <div className="flex items-center gap-1">
                               <MapPin className="w-4 h-4 text-gray-400" />
-                              <span>
+                              <span className="truncate">
                                 {company.city}, {company.state}
                               </span>
                             </div>
                           </div>
 
                           {/* Company Description */}
-                          <div className="mt-3">
+                          <div className="hidden md:block">
                             <p className="text-sm text-gray-600 leading-relaxed line-clamp-2">
                               {company.description ||
                                 "Professional moving services with experienced team members dedicated to providing safe, reliable, and efficient relocation solutions for residential and commercial clients."}
@@ -636,22 +640,26 @@ export const Movers = () => {
                       </div>
 
                       {/* Contact Actions */}
-                      <div className="flex flex-col gap-2 ml-6">
-                        <div className="text-right mb-2">
-                          <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
+                      <div className="flex flex-col gap-3 lg:ml-6 lg:flex-shrink-0">
+                        <div className="flex flex-col sm:flex-row lg:flex-col gap-2 lg:text-right">
+                          <div className="flex items-center gap-1 text-sm text-gray-600">
                             <Phone className="w-4 h-4" />
-                            <span className="font-medium">{company.phone}</span>
+                            <span className="font-medium truncate">
+                              {company.phone}
+                            </span>
                           </div>
                           <div className="flex items-center gap-1 text-sm text-gray-600">
                             <Mail className="w-4 h-4" />
-                            <span className="text-xs">{company.email}</span>
+                            <span className="text-xs truncate">
+                              {company.email}
+                            </span>
                           </div>
                         </div>
 
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                           <Button
                             size="sm"
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm font-medium"
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 md:px-4 py-2 text-sm font-medium flex-1 sm:flex-none"
                             onClick={(e) => {
                               e.stopPropagation();
                               window.location.href = "/quote";
@@ -662,7 +670,7 @@ export const Movers = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="border-blue-200 text-blue-600 hover:bg-blue-50 px-4 py-2 text-sm font-medium"
+                            className="border-blue-200 text-blue-600 hover:bg-blue-50 px-3 md:px-4 py-2 text-sm font-medium flex-1 sm:flex-none"
                             onClick={(e) => {
                               e.stopPropagation();
                               window.location.href = `tel:${company.phone}`;
