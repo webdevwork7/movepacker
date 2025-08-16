@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Company } from "@/types/database";
-import { CompanyCard } from "@/components/home/CompanyCard";
+
 import { HelpSection } from "@/components/home/HelpSection";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { format, setDate } from "date-fns";
+import { format } from "date-fns";
 import {
   CalendarIcon,
   Truck,
@@ -66,15 +66,7 @@ export const Movers = () => {
     ? city.charAt(0).toUpperCase() + city.slice(1)
     : "Your City";
 
-  useEffect(() => {
-    fetchPlansAndCompanies();
-  }, []);
-
-  useEffect(() => {
-    filterCompanies();
-  }, [companies, filterCompanies, searchTerm]);
-
-  const fetchPlansAndCompanies = async () => {
+  const fetchPlansAndCompanies = useCallback(async () => {
     setLoading(true);
     try {
       // Fetch plans
@@ -91,23 +83,21 @@ export const Movers = () => {
       setPlatinumPlanId(platinumPlan?.id || null);
       setSilverPlanId(silverPlan?.id || null);
 
-      // Fetch companies
-      let query = supabase.from("companies").select("*").eq("is_active", true);
-
-      if (city && city !== "other") {
-        query = query.ilike("city", `%${city}%`);
-      }
-
-      const { data: companiesData } = await query;
+      // Fetch ALL companies (not filtered by city)
+      const { data: companiesData } = await supabase
+        .from("companies")
+        .select("*")
+        .eq("is_active", true);
       setCompanies(companiesData || []);
+      setFilteredCompanies(companiesData || []);
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const filterCompanies = () => {
+  const filterCompanies = useCallback(() => {
     let filtered = companies;
     if (searchTerm) {
       filtered = companies.filter(
@@ -119,7 +109,15 @@ export const Movers = () => {
     }
     setFilteredCompanies(filtered);
     setCurrentPage(1);
-  };
+  }, [companies, searchTerm]);
+
+  useEffect(() => {
+    fetchPlansAndCompanies();
+  }, [fetchPlansAndCompanies]);
+
+  useEffect(() => {
+    filterCompanies();
+  }, [filterCompanies]);
 
   const getTopCompanies = () => {
     const goldCompanies = companies.filter((c) => c.plan_id === goldPlanId);
@@ -237,17 +235,120 @@ export const Movers = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-      {/* Section 1: Header */}
-      <section className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-16">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Best Movers & Packers in {cityName}
-          </h1>
-          <p className="text-xl text-blue-100 max-w-3xl mx-auto">
-            Find trusted and verified moving companies in {cityName}. Compare
-            prices, read reviews, and book your perfect move today.
-          </p>
+      {/* Section 1: Enhanced Header */}
+      <section className="relative bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 text-white overflow-hidden">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-20 left-20 w-32 h-32 bg-orange-400 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute top-40 right-32 w-24 h-24 bg-blue-300 rounded-full blur-2xl animate-pulse delay-1000"></div>
+          <div className="absolute bottom-32 left-1/3 w-28 h-28 bg-orange-300 rounded-full blur-3xl animate-pulse delay-2000"></div>
+          <div className="absolute bottom-20 right-20 w-20 h-20 bg-blue-200 rounded-full blur-2xl animate-pulse delay-3000"></div>
         </div>
+
+        {/* Geometric Patterns */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-10 left-10 w-16 h-16 border-2 border-white rounded-full animate-spin-slow"></div>
+          <div className="absolute top-32 right-20 w-12 h-12 border-2 border-orange-400 rounded-full animate-bounce"></div>
+          <div className="absolute bottom-20 left-1/4 w-8 h-8 border-2 border-white rounded-full animate-ping"></div>
+        </div>
+
+        <div className="relative z-10 container mx-auto px-4 py-20">
+          <div className="text-center max-w-5xl mx-auto">
+            {/* Location Badge */}
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-6 py-3 mb-8 border border-white/20">
+              <MapPin className="w-5 h-5 text-orange-400" />
+              <span className="text-white font-medium">{cityName}</span>
+            </div>
+
+            {/* Main Heading with Animation */}
+            <div className="mb-8">
+              <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+                Best Movers & Packers in
+                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600 animate-pulse mt-2">
+                  {cityName}
+                </span>
+              </h1>
+              <div className="w-32 h-1 bg-gradient-to-r from-orange-400 to-orange-600 mx-auto mb-6"></div>
+            </div>
+
+            <p className="text-xl md:text-2xl mb-12 text-blue-100 max-w-4xl mx-auto leading-relaxed">
+              Discover trusted and verified moving companies in {cityName}.
+              Compare prices, read authentic reviews, and book your perfect move
+              with confidence.
+            </p>
+
+            {/* Trust Indicators */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
+              <div className="text-center group">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600/80 rounded-full mb-3 group-hover:bg-blue-500 transition-colors">
+                  <Shield className="w-8 h-8" />
+                </div>
+                <h3 className="text-2xl font-bold mb-1">100%</h3>
+                <p className="text-blue-100 text-sm">Verified</p>
+              </div>
+              <div className="text-center group">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-600/80 rounded-full mb-3 group-hover:bg-orange-500 transition-colors">
+                  <Star className="w-8 h-8" />
+                </div>
+                <h3 className="text-2xl font-bold mb-1">4.8+</h3>
+                <p className="text-blue-100 text-sm">Rating</p>
+              </div>
+              <div className="text-center group">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600/80 rounded-full mb-3 group-hover:bg-blue-500 transition-colors">
+                  <Users className="w-8 h-8" />
+                </div>
+                <h3 className="text-2xl font-bold mb-1">50K+</h3>
+                <p className="text-blue-100 text-sm">Happy Customers</p>
+              </div>
+              <div className="text-center group">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-600/80 rounded-full mb-3 group-hover:bg-orange-500 transition-colors">
+                  <Clock className="w-8 h-8" />
+                </div>
+                <h3 className="text-2xl font-bold mb-1">24/7</h3>
+                <p className="text-blue-100 text-sm">Support</p>
+              </div>
+            </div>
+
+            {/* Features Row */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 hover:bg-white/20 transition-all duration-300">
+                <Shield className="w-12 h-12 text-orange-400 mb-4 mx-auto" />
+                <h3 className="text-xl font-semibold mb-2">
+                  Licensed & Insured
+                </h3>
+                <p className="text-blue-100">
+                  All movers are fully licensed and insured for your peace of
+                  mind
+                </p>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 hover:bg-white/20 transition-all duration-300">
+                <DollarSign className="w-12 h-12 text-orange-400 mb-4 mx-auto" />
+                <h3 className="text-xl font-semibold mb-2">Best Prices</h3>
+                <p className="text-blue-100">
+                  Compare quotes instantly and get the best deals in {cityName}
+                </p>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 hover:bg-white/20 transition-all duration-300">
+                <Star className="w-12 h-12 text-orange-400 mb-4 mx-auto" />
+                <h3 className="text-xl font-semibold mb-2">Top Rated</h3>
+                <p className="text-blue-100">
+                  Only the highest-rated movers make it to our platform
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Custom CSS for animations */}
+        <style>{`
+          @keyframes spin-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+          .animate-spin-slow {
+            animation: spin-slow 3s linear infinite;
+          }
+        `}</style>
       </section>
 
       {/* Section 2: Stats */}
@@ -307,15 +408,121 @@ export const Movers = () => {
           </div>
 
           {topCompanies.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            <div className="space-y-4 max-w-6xl mx-auto">
               {topCompanies.map((company, index) => (
-                <CompanyCard
+                <div
                   key={company.id}
-                  company={company}
-                  rank={index + 1}
-                  isTopRanked={true}
+                  className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 overflow-hidden cursor-pointer transform hover:scale-[1.02]"
                   onClick={() => setSelectedCompany(company)}
-                />
+                >
+                  <div className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        {/* Rank Badge */}
+                        <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full text-white font-bold text-lg shadow-lg">
+                          #{index + 1}
+                        </div>
+
+                        {/* Company Info */}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-xl font-bold text-gray-800 hover:text-blue-600 transition-colors">
+                              {company.name}
+                            </h3>
+
+                            {/* Plan-based Badges */}
+                            <div className="flex items-center gap-2">
+                              <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full border border-green-200">
+                                ✓ Verified
+                              </span>
+                              <span className="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-full border border-indigo-200">
+                                🕒 24/7 Support
+                              </span>
+                              {company.plan_id === platinumPlanId && (
+                                <span className="px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-semibold rounded-full shadow-md">
+                                  💎 Elite Partner
+                                </span>
+                              )}
+                              {company.plan_id === goldPlanId && (
+                                <span className="px-3 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-semibold rounded-full shadow-md">
+                                  👑 Premium Pro
+                                </span>
+                              )}
+                              {company.plan_id === silverPlanId && (
+                                <span className="px-3 py-1 bg-gradient-to-r from-blue-400 to-cyan-500 text-white text-xs font-semibold rounded-full shadow-md">
+                                  ⭐ Trusted Choice
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Rating and Location */}
+                          <div className="flex items-center gap-4 text-sm text-gray-600">
+                            <div className="flex items-center gap-1">
+                              <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                              <span className="font-semibold text-gray-800">
+                                {company.rating.toFixed(1)}
+                              </span>
+                              <span>({company.review_count} reviews)</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <MapPin className="w-4 h-4 text-gray-400" />
+                              <span>
+                                {company.city}, {company.state}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Company Description */}
+                          <div className="mt-3">
+                            <p className="text-sm text-gray-600 leading-relaxed line-clamp-2">
+                              {company.description ||
+                                "Professional moving services with experienced team members dedicated to providing safe, reliable, and efficient relocation solutions for residential and commercial clients."}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Contact Actions */}
+                      <div className="flex flex-col gap-2 ml-6">
+                        <div className="text-right mb-2">
+                          <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
+                            <Phone className="w-4 h-4" />
+                            <span className="font-medium">{company.phone}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-sm text-gray-600">
+                            <Mail className="w-4 h-4" />
+                            <span className="text-xs">{company.email}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm font-medium"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.location.href = "/quote";
+                            }}
+                          >
+                            Get Quote
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-blue-200 text-blue-600 hover:bg-blue-50 px-4 py-2 text-sm font-medium"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.location.href = `tel:${company.phone}`;
+                            }}
+                          >
+                            Call Now
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
           ) : (
