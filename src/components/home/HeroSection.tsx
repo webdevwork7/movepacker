@@ -86,13 +86,13 @@ export const HeroSection = () => {
             quotes, compare services, and book your perfect move today.
           </p>
 
-          {/* Enhanced Search Form */}
-          <div className="bg-white/95 backdrop-blur-sm rounded-3xl p-8 shadow-2xl max-w-4xl mx-auto mb-16 border border-white/20">
-            <div className="flex gap-6">
-              <div className="relative group w-4/5">
+          {/* Enhanced Search Form - Mobile Responsive */}
+          <div className="bg-white/95 backdrop-blur-sm rounded-3xl p-4 md:p-8 shadow-2xl max-w-4xl mx-auto mb-16 border border-white/20">
+            <div className="flex flex-col md:flex-row gap-4 md:gap-6">
+              <div className="relative group flex-1 md:w-4/5">
                 <MapPin className="absolute left-4 top-4 w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors z-10" />
                 <Select value={selectedCity} onValueChange={setSelectedCity}>
-                  <SelectTrigger className="pl-12 h-14 text-gray-800 border-2 border-gray-200 focus:border-blue-500 rounded-xl text-lg w-full">
+                  <SelectTrigger className="pl-12 h-12 md:h-14 text-gray-800 border-2 border-gray-200 focus:border-blue-500 rounded-xl text-base md:text-lg w-full">
                     <SelectValue placeholder="Choose your city" />
                   </SelectTrigger>
                   <SelectContent className="max-h-80 p-1">
@@ -111,13 +111,13 @@ export const HeroSection = () => {
               <Button
                 onClick={handleSearch}
                 disabled={!selectedCity}
-                className="h-14 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none w-1/5 min-w-fit"
+                className="h-12 md:h-14 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold text-base md:text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none w-full md:w-1/5 md:min-w-fit"
               >
-                <Search className="w-5 h-5 mr-2" />
+                <Search className="w-4 h-4 md:w-5 md:h-5 mr-2" />
                 Find Movers
               </Button>
             </div>
-            <p className="text-gray-600 text-sm mt-4">
+            <p className="text-gray-600 text-xs md:text-sm mt-4 text-center md:text-left">
               Select your city • Free quotes • No obligations
             </p>
           </div>
