@@ -25,7 +25,7 @@ export const baseSiteConfig = {
     "long distance movers",
   ],
   supportEmail: "support@saawariya.site", // fallback email
-  supportPhone: "+1 (555) 123-4567",
+  supportPhone: "+91 99909 03875",
   address: "123 Moving Street, Suite 100, New York, NY 10001",
   socialLinks: {
     facebook: "https://facebook.com/moverankpro",
@@ -53,4 +53,38 @@ export const getDynamicSupportEmail = (brandName?: string) => {
   if (!brandName) return baseSiteConfig.supportEmail;
   const cleanBrandName = brandName.toLowerCase().replace(/\s+/g, "");
   return `support@${cleanBrandName}.site`;
+};
+
+// Helper function to mask phone number for display
+export const maskPhoneNumber = (phoneNumber?: string) => {
+  if (!phoneNumber) return "";
+  // Remove all non-digit characters to find the actual digits
+  const digits = phoneNumber.replace(/\D/g, "");
+  if (digits.length < 3) return phoneNumber;
+
+  // Show first 3 digits + *** while preserving original format structure
+  const firstThree = digits.substring(0, 3);
+  const maskedDigits = firstThree + "***";
+
+  // Replace the digits in the original format with masked version
+  let result = phoneNumber;
+  let digitIndex = 0;
+  let maskedIndex = 0;
+
+  for (let i = 0; i < phoneNumber.length; i++) {
+    if (/\d/.test(phoneNumber[i])) {
+      if (maskedIndex < maskedDigits.length) {
+        result =
+          result.substring(0, i) +
+          maskedDigits[maskedIndex] +
+          result.substring(i + 1);
+        maskedIndex++;
+      } else {
+        result = result.substring(0, i) + "*" + result.substring(i + 1);
+      }
+      digitIndex++;
+    }
+  }
+
+  return result;
 };

@@ -8,7 +8,11 @@ import {
   Instagram,
   Linkedin,
 } from "lucide-react";
-import { siteConfig, getDynamicSupportEmail } from "@/config/site";
+import {
+  siteConfig,
+  getDynamicSupportEmail,
+  maskPhoneNumber,
+} from "@/config/site";
 import { useSettings } from "@/hooks/useSettings";
 
 export const Footer = () => {
@@ -93,7 +97,9 @@ export const Footer = () => {
               <div className="flex items-center space-x-3">
                 <Phone className="w-5 h-5 text-blue-400" />
                 <span className="text-gray-400">
-                  {settings.support_phone || siteConfig.supportPhone}
+                  {maskPhoneNumber(
+                    settings.support_phone || siteConfig.supportPhone
+                  )}
                 </span>
               </div>
               <div className="flex items-center space-x-3">

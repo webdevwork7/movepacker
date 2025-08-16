@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { siteConfig, getDynamicSupportEmail } from "@/config/site";
+import {
+  siteConfig,
+  getDynamicSupportEmail,
+  maskPhoneNumber,
+} from "@/config/site";
 import { useSettings } from "@/hooks/useSettings";
 import { ChevronDown, ChevronUp, HelpCircle } from "lucide-react";
 

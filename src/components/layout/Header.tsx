@@ -2,7 +2,11 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Phone, Mail, Menu, X, User } from "lucide-react";
-import { siteConfig, getDynamicSupportEmail } from "@/config/site";
+import {
+  siteConfig,
+  getDynamicSupportEmail,
+  maskPhoneNumber,
+} from "@/config/site";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/useSettings";
@@ -52,7 +56,11 @@ export const Header = () => {
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-1">
               <Phone className="w-4 h-4" />
-              <span>{settings.support_phone || siteConfig.supportPhone}</span>
+              <span>
+                {maskPhoneNumber(
+                  settings.support_phone || siteConfig.supportPhone
+                )}
+              </span>
             </div>
             <div className="flex items-center space-x-1">
               <Mail className="w-4 h-4" />

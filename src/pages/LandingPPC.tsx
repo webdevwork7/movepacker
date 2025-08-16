@@ -15,7 +15,11 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { useSettings } from "@/hooks/useSettings";
-import { siteConfig, getDynamicSupportEmail } from "@/config/site";
+import {
+  siteConfig,
+  getDynamicSupportEmail,
+  maskPhoneNumber,
+} from "@/config/site";
 
 export const LandingPPC = () => {
   const { settings } = useSettings();
@@ -153,7 +157,7 @@ export const LandingPPC = () => {
                 size="lg"
               >
                 <Phone className="w-6 h-6 mr-2" />
-                Call Now: {supportPhone}
+                Call Now: {maskPhoneNumber(supportPhone)}
               </Button>
               <Button
                 className="w-full sm:w-auto bg-yellow-500 hover:bg-yellow-600 text-black font-bold px-8 py-4 text-lg rounded-xl"
@@ -357,7 +361,7 @@ export const LandingPPC = () => {
                   onClick={() => (window.location.href = `tel:${supportPhone}`)}
                   className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-lg font-bold text-lg transition-all shadow-lg"
                 >
-                  Call {supportPhone}
+                  Call {maskPhoneNumber(supportPhone)}
                 </button>
                 <button
                   onClick={() =>
@@ -485,7 +489,7 @@ export const LandingPPC = () => {
                     size="lg"
                   >
                     <Phone className="w-5 h-5 mr-2" />
-                    Call {supportPhone}
+                    Call {maskPhoneNumber(supportPhone)}
                   </Button>
                 </div>
               </div>
@@ -527,7 +531,7 @@ export const LandingPPC = () => {
                           href={`tel:${supportPhone}`}
                           className="text-yellow-300 text-lg font-bold hover:underline"
                         >
-                          {supportPhone}
+                          {maskPhoneNumber(supportPhone)}
                         </a>
                       </div>
                     </div>
@@ -617,7 +621,7 @@ export const LandingPPC = () => {
                     size="lg"
                   >
                     <Phone className="w-6 h-6 mr-2" />
-                    Call Now: {supportPhone}
+                    Call Now: {maskPhoneNumber(supportPhone)}
                   </Button>
                   <Button
                     onClick={handleWhatsApp}
