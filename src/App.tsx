@@ -6,6 +6,7 @@ import { Home } from "@/pages/Home";
 import { Auth } from "@/pages/Auth";
 import { Admin } from "@/pages/Admin";
 import { Quote } from "@/pages/Quote";
+import { Movers } from "@/pages/Movers";
 import NotFound from "@/pages/NotFound";
 import { AuthProvider } from "@/hooks/useAuth";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
@@ -45,6 +46,7 @@ export const App = () => {
               <Route path="/company" element={<CompanyDashboard />} />
               <Route path="/company-plans" element={<CompanyPlans />} />
               <Route path="/quote" element={<Quote />} />
+              <Route path="/movers/:city" element={<Movers />} />
               <Route path="/landing-ppc" element={<LandingPPC />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

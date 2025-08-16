@@ -44,7 +44,9 @@ export const HeroSection = () => {
 
   const handleSearch = () => {
     if (selectedCity) {
-      window.location.href = `/quote?city=${encodeURIComponent(selectedCity)}`;
+      window.location.href = `/movers/${encodeURIComponent(
+        selectedCity.toLowerCase()
+      )}`;
     }
   };
 
