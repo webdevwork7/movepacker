@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Company } from "@/types/database";
+import { maskPhoneNumber, maskEmail, siteConfig } from "@/config/site";
 
 interface CompanyCardProps {
   company: Company;
@@ -26,12 +27,13 @@ export const CompanyCard = ({
 }: CompanyCardProps) => {
   const handleCall = (e?: React.MouseEvent) => {
     e?.stopPropagation();
-    window.location.href = `tel:${company.phone}`;
+    // Use the company's support phone from siteConfig instead of the listing number
+    window.location.href = `tel:${siteConfig.supportPhone}`;
   };
 
   const handleEmail = (e?: React.MouseEvent) => {
     e?.stopPropagation();
-    window.location.href = `mailto:${company.email}`;
+    window.location.href = `mailto:${siteConfig.supportEmail}`;
   };
 
   const renderStars = (rating: number) => {

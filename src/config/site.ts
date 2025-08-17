@@ -88,3 +88,20 @@ export const maskPhoneNumber = (phoneNumber?: string) => {
 
   return result;
 };
+
+// Helper function to mask email address for display
+export const maskEmail = (email?: string) => {
+  if (!email) return "";
+  
+  const parts = email.split("@");
+  if (parts.length !== 2) return email;
+  
+  const username = parts[0];
+  const domain = parts[1];
+  
+  // Show only first 3 characters of username
+  const visiblePart = username.substring(0, 3);
+  const maskedPart = "*".repeat(Math.max(username.length - 3, 1));
+  
+  return `${visiblePart}${maskedPart}@${domain}`;
+};

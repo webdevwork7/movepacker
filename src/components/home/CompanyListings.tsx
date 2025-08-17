@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CompanyCard } from "./CompanyCard";
 import { Button } from "@/components/ui/button";
 import { Company } from "@/types/database";
-import { siteConfig } from "@/config/site";
+import { siteConfig, maskPhoneNumber, maskEmail } from "@/config/site";
 import {
   Award,
   TrendingUp,
@@ -267,14 +267,14 @@ export const CompanyListings = () => {
                         <div className="flex flex-col sm:flex-row lg:flex-col gap-2 lg:text-right">
                           <div className="flex items-center gap-1 text-sm text-gray-600">
                             <Phone className="w-4 h-4" />
-                            <span className="font-medium truncate">
-                              {company.phone}
+                            <span className="font-medium">
+                              {maskPhoneNumber(company.phone)}
                             </span>
                           </div>
                           <div className="flex items-center gap-1 text-sm text-gray-600">
                             <Mail className="w-4 h-4" />
                             <span className="text-xs truncate">
-                              {company.email}
+                              {maskEmail(company.email)}
                             </span>
                           </div>
                         </div>
@@ -282,7 +282,8 @@ export const CompanyListings = () => {
                         <div className="flex flex-col sm:flex-row gap-2">
                           <Button
                             size="sm"
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 md:px-4 py-2 text-sm font-medium flex-1 sm:flex-none"
+                            variant="outline"
+                            className="border-blue-200 text-blue-600 hover:bg-blue-50 px-3 md:px-4 py-2 text-sm font-medium flex-1 sm:flex-none"
                             onClick={(e) => {
                               e.stopPropagation();
                               window.location.href = "/quote";
@@ -292,11 +293,10 @@ export const CompanyListings = () => {
                           </Button>
                           <Button
                             size="sm"
-                            variant="outline"
-                            className="border-blue-200 text-blue-600 hover:bg-blue-50 px-3 md:px-4 py-2 text-sm font-medium flex-1 sm:flex-none"
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 md:px-4 py-2 text-sm font-medium flex-1 sm:flex-none"
                             onClick={(e) => {
                               e.stopPropagation();
-                              window.location.href = `tel:${company.phone}`;
+                              window.location.href = `tel:${siteConfig.supportPhone}`;
                             }}
                           >
                             Call Now
@@ -656,10 +656,10 @@ export const CompanyListings = () => {
                         Contact
                       </h5>
                       <p className="text-gray-600 text-sm break-words">
-                        {selectedCompany.email}
+                        {maskEmail(selectedCompany.email)}
                       </p>
                       <p className="text-gray-600 text-sm break-words">
-                        {selectedCompany.phone}
+                        {maskPhoneNumber(selectedCompany.phone)}
                       </p>
                     </div>
                   </div>
@@ -674,21 +674,19 @@ export const CompanyListings = () => {
                       <Button
                         className="w-full h-12 bg-blue-600 hover:bg-blue-700 whitespace-normal break-words"
                         onClick={() =>
-                          (window.location.href = `tel:${selectedCompany.phone}`)
+                          (window.location.href = `tel:${siteConfig.supportPhone}`)
                         }
                       >
-                        <Phone className="w-4 h-4 mr-2" /> Call{" "}
-                        {selectedCompany.name}
+                        <Phone className="w-4 h-4 mr-2" /> Call Now
                       </Button>
                       <Button
                         variant="outline"
                         className="w-full h-12 whitespace-normal break-words"
                         onClick={() =>
-                          (window.location.href = `mailto:${selectedCompany.email}`)
+                          (window.location.href = `mailto:${siteConfig.supportEmail}`)
                         }
                       >
-                        <Mail className="w-4 h-4 mr-2" /> Email{" "}
-                        {selectedCompany.name}
+                        <Mail className="w-4 h-4 mr-2" /> Email Us
                       </Button>
                     </div>
                   </div>

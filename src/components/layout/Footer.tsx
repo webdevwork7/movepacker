@@ -104,9 +104,7 @@ export const Footer = () => {
               >
                 <Phone className="w-5 h-5 text-blue-400" />
                 <span className="text-gray-400">
-                  {maskPhoneNumber(
-                    settings.support_phone || siteConfig.supportPhone
-                  )}
+                  {settings.support_phone || siteConfig.supportPhone}
                 </span>
               </div>
               <div className="flex items-center space-x-3">

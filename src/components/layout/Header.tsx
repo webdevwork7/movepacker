@@ -64,9 +64,7 @@ export const Header = () => {
             >
               <Phone className="w-4 h-4" />
               <span>
-                {maskPhoneNumber(
-                  settings.support_phone || siteConfig.supportPhone
-                )}
+                {settings.support_phone || siteConfig.supportPhone}
               </span>
             </div>
             <div className="flex items-center space-x-1">

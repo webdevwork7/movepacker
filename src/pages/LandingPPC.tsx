@@ -157,7 +157,7 @@ export const LandingPPC = () => {
                 size="lg"
               >
                 <Phone className="w-6 h-6 mr-2" />
-                Call Now: {maskPhoneNumber(supportPhone)}
+                Call Now: {supportPhone}
               </Button>
               <Button
                 className="w-full sm:w-auto bg-yellow-500 hover:bg-yellow-600 text-black font-bold px-8 py-4 text-lg rounded-xl"
@@ -198,7 +198,7 @@ export const LandingPPC = () => {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mt-8 text-sm opacity-80">
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4" />
-                <span>{supportEmail}</span>
+                <span>{maskPhoneNumber(supportEmail)}</span>
               </div>
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
@@ -361,7 +361,7 @@ export const LandingPPC = () => {
                   onClick={() => (window.location.href = `tel:${supportPhone}`)}
                   className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-lg font-bold text-lg transition-all shadow-lg"
                 >
-                  Call {maskPhoneNumber(supportPhone)}
+                  Call {supportPhone}
                 </button>
                 <button
                   onClick={() =>
@@ -489,7 +489,7 @@ export const LandingPPC = () => {
                     size="lg"
                   >
                     <Phone className="w-5 h-5 mr-2" />
-                    Call {maskPhoneNumber(supportPhone)}
+                    Call {supportPhone}
                   </Button>
                 </div>
               </div>
@@ -531,7 +531,7 @@ export const LandingPPC = () => {
                           href={`tel:${supportPhone}`}
                           className="text-yellow-300 text-lg font-bold hover:underline"
                         >
-                          {maskPhoneNumber(supportPhone)}
+                          {supportPhone}
                         </a>
                       </div>
                     </div>
@@ -545,7 +545,7 @@ export const LandingPPC = () => {
                           href={`mailto:${supportEmail}`}
                           className="text-yellow-300 hover:underline"
                         >
-                          {supportEmail}
+                          {maskPhoneNumber(supportEmail)}
                         </a>
                       </div>
                     </div>
@@ -621,7 +621,7 @@ export const LandingPPC = () => {
                     size="lg"
                   >
                     <Phone className="w-6 h-6 mr-2" />
-                    Call Now: {maskPhoneNumber(supportPhone)}
+                    Call Now: {supportPhone}
                   </Button>
                   <Button
                     onClick={handleWhatsApp}
